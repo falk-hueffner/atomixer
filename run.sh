@@ -16,5 +16,4 @@ else
   mv Size.hh.tmp Size.hh
 fi
 
-make
-./atomixer $1
+make && ./atomixer $1
