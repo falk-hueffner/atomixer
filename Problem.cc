@@ -28,20 +28,25 @@ bool Problem::myIsBlock[NUM_FIELDS];
 vector<Pos> Problem::myStartPositions;
 vector<Pos> Problem::myGoalPositions;
 
-void Problem::setProblem(const Level& level, int goalPosNr) {
-    Pos d = level.goalPos(goalPosNr);
-    int dx = d.x(), dy = d.y();
-    for (int x = 0; x < XSIZE; ++x) {
-	for (int y = 0; y < YSIZE; ++y) {
+void Problem::setLevel(const Level& level) {
+    for (int y = 0; y < YSIZE; ++y) {
+	for (int x = 0; x < XSIZE; ++x) {
 	    const Atom& atom = level.startBoard().field(x, y);
-	    if (atom.isAtom()) {
+	    if (atom.isAtom())
 		myStartPositions.push_back(Pos(x, y));
-		Pos goalPos = level.goal().find(atom);
-		Pos realGoalPos = Pos(goalPos.x() + dx, goalPos.y() + dy);
-		assert(realGoalPos.ok());
-		myGoalPositions.push_back(realGoalPos);
-	    }
 	    myIsBlock[Pos(x, y).fieldNumber()] = atom.isBlock();
 	}
+    }
+}
+
+void Problem::setGoal(const Level& level, int goalPosNr) {
+    Pos d = level.goalPos(goalPosNr);
+    int dx = d.x(), dy = d.y();
+    for (int i = 0; i < myStartPositions.size(); ++i) {
+	const Atom& atom = level.startBoard().field(myStartPositions[i].fieldNumber());
+	Pos goalPos = level.goal().find(atom);
+	Pos realGoalPos = Pos(goalPos.x() + dx, goalPos.y() + dy);
+	assert(realGoalPos.ok());
+	myGoalPositions.push_back(realGoalPos);
     }
 }
