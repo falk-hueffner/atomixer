@@ -19,10 +19,12 @@
   $Id$
 */
 
+#include <assert.h>
+
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <sstream>
+#include <strstream>
 #include <string>
 
 #include "Board.hh"
@@ -31,7 +33,7 @@ using namespace std;
 
 Board::Board(map<string, string> lines, string key, int len) {
     for (int y = 0; y < YSIZE; ++y) {
-	stringstream keyStream;
+	strstream keyStream;
 	keyStream << key << '_' << setfill('0') << setw(len) << y;
 	string line = lines[keyStream.str()];
 	    
