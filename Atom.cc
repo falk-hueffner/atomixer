@@ -34,9 +34,11 @@ const char Atom::idMap[][2] = {{'.', ' '},
 			       {'5', 'S'},
 			       {'6', 'F'},
 			       {'7', 'L'}, // Cl actually
-			       {'o', 'o'}, // "crystal"
-			       {'A', '-'},
-			       {'C', '|'},
+			       {'8', '8'}, // For Marbles levels
+			       {'9', '9'}, // For Marbles levels
+			       {'o', 'o'}, // KAtomic "crystal"
+			       {'A', '-'}, // KAtomic horizontal floating binding
+			       {'C', '|'}, // KAtomic vertical floating binding
 			       {'P', 'P'}, // for Adrien's levels, not in KAtomic
 			       {  0,   0}};
 
