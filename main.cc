@@ -19,15 +19,24 @@
   $Id$
 */
 
+#include <assert.h>
+
 #include <iostream>
+#include <fstream>
 
 #include "Level.hh"
 
 using namespace std;
 
-int main() {
-    Level level(cin);
+int main(int argc, char* argv[]) {
+    assert(argc == 2);
+    ifstream levelStream(argv[1]);
+    assert(levelStream);
+    Level level(levelStream);
 
-    cout << level << endl;
+    //cout << level << endl;
+    cout << argv[1] << '\t';
+    level.printStats();
+    cout << endl;
     return 0;
 }

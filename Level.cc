@@ -20,6 +20,8 @@
 */
 
 #include <iostream>
+#include <iomanip>
+#include <map>
 
 #include "Level.hh"
 
@@ -39,6 +41,43 @@ Level::Level(istream& in) {
 
     myStartBoard = Board(lines, "feld", 2);
     myGoal       = Board(lines, "mole", 1);
+}
+
+void Level::printStats() const {
+    map<Atom, int> atomCounts;
+    int numAtoms = 0;
+    for (int y = 0; y < Board::YSIZE; ++y) {
+	for (int x = 0; x < Board::XSIZE; ++x) {
+	    if (startBoard().field(x, y).isAtom()) {
+		++atomCounts[startBoard().field(x, y)];
+		++numAtoms;
+	    }
+	}
+    }
+    map<int, int> bucketSizes;
+    cout << "Atoms: " << setw(2) << numAtoms <<  '|';
+    for (map<Atom, int>::const_iterator p = atomCounts.begin();
+	 p != atomCounts.end(); ++p) {
+	++bucketSizes[p->second];
+    }
+    //for (map<int, int>::const_iterator p = bucketSizes.begin();
+    //p != bucketSizes.end(); ++p) {
+    for (int i = 1; i <= 6; ++i)
+	if (bucketSizes[i] == 0)
+	    cout <<  "  |";
+	else
+	    cout << setw(2) << bucketSizes[i] << '|';
+    /*
+	if (p->first == 1)
+	    cout << "\tunique:\t";
+	else if (p->first == 2)
+	    cout << "\ttwice:\t";
+	else if (p->first == 3)
+	    cout << "\tthrice:\t";
+	else
+	    cout << '\t' << p->first << " times:\t";
+	cout << -> second;
+    */
 }
 
 ostream& operator<<(ostream& out, const Level& level) {
