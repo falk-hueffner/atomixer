@@ -2,6 +2,7 @@
 ChangeLog
 Makefile
 Makefile.in
+Size.hh
 aclocal.m4
 atomixer
 aux
