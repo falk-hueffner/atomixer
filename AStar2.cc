@@ -38,6 +38,8 @@
 
 using namespace std;
 
+// the hash table is considered to be full if it has less than LOAD_FACTOR *
+// #states entries
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
@@ -49,52 +51,39 @@ vector<AStarState> states;
 vector<int> hashTable;
 deque<Move> solution;
 
-static int maxMoves;
-static int minMinTotalMoves;
+static int maxMoves;		// cutoff
+static int minMinTotalMoves;	// currently lowest f-value of an open state
 static int firstOpen;
 static int searchIndex;
 static int numOpen;
 
-#ifdef DO_MREC
-static int mrecMoves;
-static IDAStarState mrecState;
-static bool idastar();
-#endif
-
 void hashInsert(const AStarState& state) {
-    DEBUG0("inserting " << state);
     unsigned int hash = state.hash() % hashTable.size();
-    DEBUG0(" hash = " << hash);
     while (true) {
-	if (hashTable[hash] == 0) {
-	    DEBUG0(" hash = " << hash << " empty. Putting it there.");
+	if (hashTable[hash] == 0) { // found empty place?
 	    states.push_back(state);
 	    ++numOpen;
-	    DEBUG0(" pushed " << state);
 	    hashTable[hash] = states.size() - 1;
 
 	    return;
 	} else {
 	    AStarState& oldState = states[hashTable[hash]];
-	    DEBUG0(" hash = " << hash << ": " << oldState << " already there.");
-	    if (oldState == state) {
-		DEBUG0(" hash = " << hash << ": "
-		       << oldState << " equals new state.");
+	    if (oldState == state) { // already known?
 		if (state.numMoves < oldState.numMoves) {
-		    DEBUG0(" New way to this state is shorter.\n");
+		    // An important property of A* is that states that have
+		    // already been expanded will never be re-expanded.
+		    assert(oldState.isOpen);
 		    oldState.numMoves = state.numMoves;
-		    oldState.isOpen = true;
 		    oldState.predecessor = state.predecessor;
-		    ++numOpen;
-		    if (hashTable[hash] < firstOpen) {
+		    if (hashTable[hash] < firstOpen)
 			firstOpen = hashTable[hash];
-		    }
 		    return;
 		} else {
-		    DEBUG0(" We already know a better way.");
+		    // we already know a better way
 		    return;
 		}
 	    }
+	    // hash collision; probe linearly for first free space.
 	    if (++hash >= hashTable.size())
 		hash = 0;
 	}
@@ -102,72 +91,59 @@ void hashInsert(const AStarState& state) {
 }
 
 int findBest(int maxMoves) {
-    DEBUG0("--- findBest ---");
-    int numNodes = 0;
     ++searchIndex;
     while (true) {
-	DEBUG0("Looking for states with max. " << minMinTotalMoves
-	       << " minTotalMoves, starting from " << searchIndex
-	       << " (" << states.size() << " states).");
-
 	bool alreadyRestarted = false;
 	while (true) {
 	    for (; searchIndex < states.size(); ++searchIndex) {
-		if (states[searchIndex].isOpen) {
-		    if (states[searchIndex].minTotalMoves() <= minMinTotalMoves) {
-			if (states[searchIndex].minTotalMoves() != minMinTotalMoves)
-			    DEBUG1("*** WEIRD ***");
-			DEBUG0("Best at " << searchIndex
-			       << ". Looked at " << numNodes << " states.");
-			return searchIndex;
-		    }
+		if (states[searchIndex].isOpen
+		    && (states[searchIndex].minTotalMoves()
+			<= minMinTotalMoves)) {
+		    assert(states[searchIndex].minTotalMoves()
+			   == minMinTotalMoves);
+		    return searchIndex;
 		}
-		++numNodes;
 	    }
-	    DEBUG0("Arrived at end of states.");
-	    if (alreadyRestarted)
+	    // we fell off the end
+	    if (alreadyRestarted) // already twice?
 		break;
-	    DEBUG0("Finding first open state.");
+	    // find first open state
 	    for (; firstOpen < states.size() && !states[firstOpen].isOpen;
 		 ++firstOpen) { }
 	    if (firstOpen == states.size()) {
-		DEBUG0("No open node left at all!");
+		// no open nodes left at all...
 		return 0;
 	    }
-	    DEBUG0("First open: " << firstOpen << '.');
 	    searchIndex = firstOpen;
 	    alreadyRestarted = true;
 	}
-	DEBUG1("No states with max. " << minMinTotalMoves
-	       << " minTotalMoves in queue.");
-	if (++minMinTotalMoves > maxMoves) {
-	    DEBUG0("No states within limit of " << maxMoves << " moves.");
+	// We fell off the end twice. No open states with f = minMinTotalMoves
+	// left.
+	if (++minMinTotalMoves > maxMoves)
 	    return 0;
-	}
+
 	searchIndex = firstOpen;
     }
 }
 
 deque<Move> aStar2(const State& startState, int nmaxMoves) {
-    cout << "sizeof(AStarState) = " << sizeof(AStarState) << endl;
     AStarState start = startState;
     maxMoves = nmaxMoves;
     if (start.minTotalMoves() > maxMoves)
-	return deque<Move>();	// saves the allocations which can take quite some time
+	return deque<Move>();	// saves the allocations which can take quite
+				// some time
 
-    DEBUG0("MAX_STATES = " << MAX_STATES);
-    DEBUG0("MAX_HASHES = " << MAX_HASHES);
     states.clear();
-    states.push_back(AStarState());	// 0 reserved for 'empty'
+    states.push_back(AStarState()); // 0 reserved for 'empty'
     states.reserve(MAX_STATES);
     hashTable.clear();
     hashTable.resize(MAX_HASHES);
 
     minMinTotalMoves = 0;
-    firstOpen = 1;
+    firstOpen = 1;		// 0 reserved for 'empty'
     searchIndex = firstOpen;
     numOpen = 0;
-    
+
     DEBUG1("start state: " << start);
     hashInsert(start);
     ++Statistics::statesGenerated;
@@ -175,10 +151,8 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
     Statistics::timer.start();
     while (true) {
 	int bestIndex = findBest(maxMoves);
-	DEBUG0("bestIndex: " << bestIndex);
-	if (bestIndex == 0)
+	if (bestIndex == 0)	// no open state left
 	    break;
-	DEBUG0("best: " << states[bestIndex]);
 	states[bestIndex].isOpen = false;
 	--numOpen;
 
@@ -201,10 +175,8 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 		     << ")\n";
 		Statistics::print(cout);
 	    }
-	    DEBUG0("moving " << states[bestIndex] << ' ' << *m);
 	    AStarState newState(states[bestIndex], *m);
 	    newState.predecessor = bestIndex;
-	    DEBUG0("New state: " << newState);
 
 	    int minMovesLeft = newState.minMovesLeft();
 	    if (minMovesLeft == 0) { // special property of our heuristic...
@@ -247,64 +219,13 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 		DEBUG0("State exceeds move limit.");
 		continue;
 	    }
-	    if (newState.minTotalMoves() < minMinTotalMoves) {
-		// This can't happen if the heuristic is monotone
-		DEBUG1("minTotalMoves of " << newState.minTotalMoves()
-		       << " smaller than previous minMinTotalMoves of "
-		       << minMinTotalMoves);
-		abort();
-	    }
+
+	    // we have a monotone heuristic
+	    assert(newState.minTotalMoves() >= minMinTotalMoves);
 
 	    if (states.size() == MAX_STATES) {
 		DEBUG1("State table full.");
-#ifdef DO_MREC
-		for (int i = firstOpen; i < states.size(); ++i) {
-		    DEBUG1("MREC for " << states[i]);
-		    mrecState = states[i].atomPositions;
-		    mrecMoves = states[i].numMoves;
-		    if (idastar()) {
-			// FIXME copy&paste
-			cout << "Found solution.\n"
-			     << "\nstates: " << states.size()
-			     << " \t(" << (states.size() * sizeof(AStarState)) / 1000000
-			     << "M/" << (states.capacity() * sizeof(AStarState)) / 1000000
-			     << "M)\nhashes: " << hashTable.size()
-			     << " \t(" << (states.size() * sizeof(int)) / 1000000
-			     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
-			     << "M)\n";
-			AStarState* pNode = &states[i];
-			AStarState* pNextNode;
-
-			bool done = false;
-			while (!done) {
-			    if (pNode->predecessor == 1) // start node
-				done = true;
-			    pNextNode = pNode;
-			    DEBUG0("predecessor of " << *pNode
-				   << " is " << pNode->predecessor);
-			    pNode = &states[pNode->predecessor];
-			    
-			    vector<Move> moves = pNode->moves();
-			    
-			    for (vector<Move>::const_iterator m = moves.begin();
-				 m != moves.end(); ++m) {
-				
-				if (AStarState(*pNode, *m) == *pNextNode) {
-				    solution.push_front(*m);
-				    break;
-				}
-			    }
-			}
-
-			return solution;
-			//end FIXME
-		    }
-		}
-		DEBUG1("IDA* for all open nodes left didn't find anything.");
-		return deque<Move>();
-#else
 		exit(1);
-#endif
 	    }
 
 	    hashInsert(newState);
@@ -318,53 +239,4 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
     return deque<Move>();
 }
 
-#ifdef DO_MREC
-static bool idastar() {
-
-    DEBUG0(spaces(mrecMoves) << "dfs: moves =  " << mrecMoves
-	   << " state = " << mrecState);
-    if (mrecMoves + mrecState.minMovesLeft() > maxMoves)
-	return false;
-
-    /*
-    if (nodesGenerated - lastOutput > 2000000) {
-	lastOutput = nodesGenerated;
-	cout << mrecState << endl
-	     << " Nodes: " << nodesGenerated
-	     << " moves = " << mrecMoves
-	     << " nodes/second: "
-	     << (int64_t) (double(nodesGenerated) / timer.seconds())
-	     << endl;
-    }
-    */
-
-    // generate all moves...
-    for (int atomNo = 0; atomNo < NUM_ATOMS; ++atomNo) {
-	Pos startPos = mrecState.position(atomNo);
-	for (int dirNo = 0; dirNo < 4; ++dirNo) {
-	    Dir dir = DIRS[dirNo];
-	    DEBUG0(spaces(mrecMoves) << "moving " << atomNo << " @ " << startPos
-		   << ' ' << dir);
-	    Pos pos;
-	    for (pos = startPos + dir; !mrecState.isBlocking(pos); pos += dir) { }
-	    Pos newPos = pos - dir;
-	    if (newPos != startPos) {
-		DEBUG0(spaces(mrecMoves) << "moves to " << newPos);
-		IDAStarMove move(startPos, newPos);
-		mrecState.apply(move);
-		++mrecMoves;
-		++nodesGenerated;
-		++totalNodesGenerated;
-		if (mrecState.minMovesLeft() == 0 || idastar()) {
-		    solution.push_front(Move(atomNo, startPos, newPos, dir));
-		    return true;
-		}
-		--mrecMoves;
-		mrecState.undo(move);
-	    }
-	}
-    }
-
-    return false;
-}
-#endif
+//deque<Move> buildSolution()

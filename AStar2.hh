@@ -22,9 +22,6 @@
 #ifndef ASTAR2_HH
 #define ASTAR2_HH
 
-//#define DO_MREC
-#undef DO_MREC
-
 #include <deque>
 
 class State;
@@ -32,5 +29,7 @@ class State;
 #include "Move.hh"
 
 std::deque<Move> aStar2(const State& start, int maxDist);
+
+#define ALGORITHM_NAME "astar"
 
 #endif
