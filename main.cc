@@ -54,7 +54,7 @@ string isotime() {
 }
 
 extern "C" {
-    void writestats() {
+    void writestats(void) {
 	ofstream statsStream(ALGORITHM_NAME, ios::app);
 	statsStream << levelName
 		    << " with " << ALGORITHM_NAME << " final statistics:\n";
