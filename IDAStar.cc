@@ -19,6 +19,9 @@
   $Id$
 */
 
+#include <assert.h>
+#include <stdlib.h>
+
 #include <deque>
 #include <iostream>
 #include <vector>
@@ -119,8 +122,10 @@ static inline bool between(Pos p1, Pos p2, Dir dir, Pos pm) {
 	return p2 <= pm && pm <= p1;
     case RIGHT:
 	return p1 <= pm && pm <= p2;
+    default:
+	abort();
     }
-    assert(false);
+    return false;		// Compaq C++ just doesn't get it...
 }
 
 static bool dfs(Move lastMove) {
