@@ -27,18 +27,25 @@
 
 #include "Level.hh"
 #include "Problem.hh"
-#include "State.hh"
-#include "AStar.hh"
-//#include "Search.hh"
+#include "State2.hh"
+#include "AStar2.hh"
 
 using namespace std;
+
+string isotime() {
+    time_t timet = time(NULL);
+    char timestr[256];
+    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M",
+	     localtime(&timet));
+    return string(timestr);
+}
 
 int main(int argc, char* argv[]) {
     assert(argc >= 2);
 
     if (argc > 2) {		// info
-	cout << "Level           |#A|#G|1x|2x|3x|4x|5x|\n"
-	     << "----------------+--+--+--+--+--+--+--+\n";
+	cout << "Level                   |#A|#G|1x|2x|3x|4x|5x|\n"
+	     << "------------------------+--+--+--+--+--+--+--+\n";
 	for (int i = 1; i < argc; ++i) {
 	    cout << argv[i] << '\t';
 	    ifstream levelStream(argv[i]);
@@ -56,8 +63,6 @@ int main(int argc, char* argv[]) {
     Level level(levelStream);
     cout << level.startBoard();
     Problem::setLevel(level);
-    State start(Problem::startPositions());
-
 
     string levelName = string(argv[1]);
     while (levelName.find('/') != string::npos)
@@ -83,8 +88,8 @@ int main(int argc, char* argv[]) {
 	}
     }
 
-    
-    
+    cout << "sizeof(State2) = " << sizeof(State2) << endl;
+
     for (int maxMoves = knownLowerBound; ; ++maxMoves) {
 	cout << "******************** " << maxMoves << " ********************\n";
 	for (int goalNr = 0; goalNr < level.numGoals(); ++goalNr) {
@@ -92,12 +97,15 @@ int main(int argc, char* argv[]) {
 		 << maxMoves << ": " << level.goalPos(goalNr)
 		 << " --------------------\n";
 	    Problem::setGoal(level, goalNr);
-	    deque<Move> moves = aStar(start, maxMoves);
+	    State2 start(Problem::startPositions());
+	    deque<Move> moves = aStar2(start, maxMoves);
 	    if (moves.size() > 0) {
-		State state = start;
+		State2 state = start;
 		for (deque<Move>::const_iterator m = moves.begin();
-		     m != moves.end(); ++m)
-		    state = State(state, *m);
+		     m != moves.end(); ++m) {
+		    state = State2(state, *m);
+		    cout << Board(state);
+		}
 		cout << "Final board:\n";
 		cout << Board(state);
 
@@ -108,6 +116,14 @@ int main(int argc, char* argv[]) {
 		}
 		ofstream boundStream("bounds", ios::app);
 		boundStream << levelName << ": = " << maxMoves << endl;
+
+		ofstream solStream("solutions", ios::app);
+		solStream << levelName << ' ' << isotime()
+			  << ' ' << moves.size() << " moves: ";
+		for (deque<Move>::const_iterator m = moves.begin();
+		     m != moves.end(); ++m)
+		    solStream << *m << " ";
+		solStream << endl;
 
 		return 0;
 	    }
