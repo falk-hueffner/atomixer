@@ -20,11 +20,13 @@
 */
 
 #include <iostream>
+#include <iomanip>
 
 #include "Statistics.hh"
 
 uint64_t Statistics::statesGenerated;
 uint64_t Statistics::statesExpanded;
+uint64_t Statistics::statesGeneratedAtDepth[128];
 uint64_t Statistics::numChildren;
 uint64_t Statistics::numPruned;
 
@@ -32,7 +34,7 @@ int Statistics::lowerBound;
 int Statistics::upperBound;
 int Statistics::solutionLength;
 
-Timer    Statistics::timer;
+Timer Statistics::timer;
 
 void Statistics::print(std::ostream& out) {
     out << " Time:             " << timer
@@ -45,4 +47,10 @@ void Statistics::print(std::ostream& out) {
 	<< "\n  effective:       " << double(numChildren - numPruned)
 					/ (double(statesExpanded) +  1e-6)
 	<< std::endl;
+
+    for (int i = 0; i < 128; ++i) {
+	if (statesGeneratedAtDepth[i] != 0)
+	    out << " Depth " << std::setw(2) << i << ": "
+		<< statesGeneratedAtDepth[i] << std::endl;
+    }
 }
