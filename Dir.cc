@@ -19,25 +19,23 @@
   $Id$
 */
 
-#ifndef POS_HH
-#define POS_HH
+#include <iostream>
 
-#include <iosfwd>
+#include "Dir.hh"
 
-#include "Size.hh"
+using namespace std;
 
-class Pos {
-public:
-    Pos() { }		// leave uninitialized
-    Pos(int x, int y) : p(y * XSIZE + x) { }
-
-    int x() const { return p % XSIZE; }
-    int y() const { return p / XSIZE; }
-
-private:
-    int p;
-};
-
-ostream& operator<<(ostream& out, const Pos& pos);
-
-#endif
+ostream& operator <<(ostream& out, Dir dir) {
+    switch(dir) {
+    case UP:
+	return out << 'u';
+    case DOWN:
+	return out << 'd';
+    case LEFT:
+	return out << 'l';
+    case RIGHT:
+	return out << 'r';
+    default:
+	return out << '?';
+    }
+}

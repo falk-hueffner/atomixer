@@ -9,8 +9,11 @@ atomixer_SOURCES = \
 	Atom.hh		\
 	Board.cc	\
 	Board.hh	\
+	Dir.cc		\
+	Dir.hh		\
 	Level.cc	\
 	Level.hh	\
 	Pos.cc		\
 	Pos.hh		\
+	Size.hh		\
 	main.cc
