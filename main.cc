@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
     ifstream levelStream(argv[1]);
     assert(levelStream);
     Level level(levelStream);
-    Problem problem(level, 0);
-    State state(problem);
+    Problem::setProblem(level, 0);
+    State state(Problem::startPositions());
     vector<Move> moves = state.moves();
 
     cout << level.startBoard();

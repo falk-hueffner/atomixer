@@ -33,19 +33,18 @@ using namespace std;
 
 class Problem {
 public:
-    Problem(const Level& level, int goalPosNr);
+    static void setProblem(const Level& level, int goalPosNr);
 
-    bool isBlock(Pos p) const { return myIsBlock[p.fieldNumber()]; }
-    Pos startPosition(int nr) const { return myStartPositions[nr]; }
-    Pos goalPosition(int nr) const { return myGoalPositions[nr]; }
-    int numAtoms() const { return myStartPositions.size(); }
+    static bool isBlock(Pos p) { return myIsBlock[p.fieldNumber()]; }
+    static const vector<Pos>& startPositions() { return myStartPositions; }
+    static Pos startPosition(int nr) { return myStartPositions[nr]; }
+    static Pos goalPosition(int nr) { return myGoalPositions[nr]; }
+    static int numAtoms() { return myStartPositions.size(); }
 
 private:
-    bool myIsBlock[NUM_FIELDS];
-    //Board myBoard;
-    //vector<Atom> myAtoms;
-    vector<Pos> myStartPositions;
-    vector<Pos> myGoalPositions;
+    static bool myIsBlock[NUM_FIELDS];
+    static vector<Pos> myStartPositions;
+    static vector<Pos> myGoalPositions;
 };
 
 #endif

@@ -27,12 +27,10 @@
 
 using namespace std;
 
-State::State(const Problem& problem) : myProblem(problem) {
-    for (int i = 0; i < myProblem.numAtoms(); ++i)
-	myAtomPositions.push_back(myProblem.startPosition(i));
-}
+State::State(vector<Pos> atomPositions) : myAtomPositions(atomPositions) { }
 
-State::State(const State& state, const Move& move) : myProblem(state.myProblem) {
+State::State(const State& state, const Move& move)
+    : myAtomPositions(state.atomPositions()) {
     myAtomPositions[move.atomNr()] = move.pos2();
 }
 
@@ -42,7 +40,7 @@ vector<Move> State::moves() const {
 
     bool isBlock[NUM_FIELDS];
     for (int i = 0; i < NUM_FIELDS; ++i)
-	isBlock[i] = myProblem.isBlock(Pos(i));
+	isBlock[i] = Problem::isBlock(Pos(i));
     for (int i = 0; i < myAtomPositions.size(); ++i)
 	isBlock[myAtomPositions[i].fieldNumber()] = true;
 
@@ -64,7 +62,7 @@ vector<Move> State::moves() const {
 int State::minMovesLeft() const {
     int minMovesLeft = 0;
     for (int i = 0; i < myAtomPositions.size(); ++i) {
-	if (myAtomPositions[i] != myProblem.goalPosition(i))
+	if (myAtomPositions[i] != Problem::goalPosition(i))
 	    ++minMovesLeft;
     }
 
@@ -79,7 +77,7 @@ bool State::operator<(const State& other) const {
 }
     
 bool State::operator==(const State& other) const {
-    for (int i = 0; i < myProblem.numAtoms(); ++i)
+    for (int i = 0; i < Problem::numAtoms(); ++i)
 	if (myAtomPositions[i] != other.myAtomPositions[i])
 	    return false;
     return true;
