@@ -59,32 +59,36 @@ static deque<Move> solution;
 static int64_t nodesGenerated, lastOutput;
 static Timer timer;
 static int cacheGoalNr = -1;
-static HashTable<IDAStarPackedState> cachedStates(MAX_STATES, LOAD_FACTOR);
+//static HashTable<IDAStarPackedState> cachedStates(MAX_STATES, LOAD_FACTOR);
+static HashTable<IDAStarPackedState> cachedStates;
 
 static bool dfs(IDAStarMove lastMove);
 deque<Move> IDAStar(int maxDist) {
     DEBUG0("IDAStar" << maxDist);
-    maxMoves = maxDist;
     moves = 0;
     nodesGenerated = 1;
     lastOutput = 0;
     state = IDAStarState(0);
     solution.clear();
-
+    //DEBUG1(cachedStates.capacity() << " 1 " << MAX_STATES);
+    //if (cachedStates.capacity() != MAX_STATES)
+    //cachedStates = HashTable<IDAStarPackedState>(MAX_STATES, LOAD_FACTOR);
+    //DEBUG1(cachedStates.capacity() << " 2 " << MAX_STATES);
     if (Problem::goalNr != cacheGoalNr) {
 	DEBUG1("cache of wrong goal nr. Clearing.");
 	cacheGoalNr = Problem::goalNr;
-	cachedStates = HashTable<IDAStarPackedState>(MAX_STATES, LOAD_FACTOR);
+	cachedStates.clear(MAX_STATES, LOAD_FACTOR);
 	if (maxDist > 0) {
 	    DEBUG1("Pre-heating cache.");
-	    for (int maxDist2 = 0; maxDist2 < maxDist - 1; ++maxDist2) {
-		DEBUG1("Pre-heating with maxDist = " << maxDist2);
-		deque<Move> moves = IDAStar(maxDist2);
-		assert(moves.empty());
+	    for (maxMoves = 0; maxMoves < maxDist; ++maxMoves) {
+		DEBUG1("Pre-heating with maxDist = " << maxMoves);
+		dfs(IDAStarMove());
+		assert(solution.empty());
 	    }
 	    DEBUG1("Pre-heated cache.");
 	}
     }
+    maxMoves = maxDist;
 
     timer.reset();
     dfs(IDAStarMove());
@@ -134,7 +138,7 @@ static bool dfs(IDAStarMove lastMove) {
 
     if (nodesGenerated - lastOutput > 2000000) {
 	lastOutput = nodesGenerated;
-	cout << state << endl
+	cout << state << " / " << maxMoves << endl
 	     << " Nodes: " << nodesGenerated
 	     << " cached: " << cachedStates.size()
 	     << " / " << cachedStates.capacity()
@@ -165,7 +169,8 @@ static bool dfs(IDAStarMove lastMove) {
 			if (!(between(lastMove.p1, lastMove.p2, lastMove.dir, newPos)
 			      || newPos + dir == lastMove.p2
 			      || between(startPos, newPos, dir, lastMove.p1)
-			      || newPos == lastMove.p2 + lastMove.dir))
+			      || startPos == lastMove.p2 + lastMove.dir))
+			      //|| newPos == lastMove.p2 + lastMove.dir))
 			    continue;
 		    }
 		}
@@ -183,8 +188,8 @@ static bool dfs(IDAStarMove lastMove) {
     }
     if (cachedStates.size() < cachedStates.capacity())
 	cachedStates.insert(IDAStarPackedState(state.positions(),
-					       //moves, (maxMoves + 1) - moves));
-					       moves, maxMoves - moves));
+					       moves, (maxMoves + 0) - moves));
+    //moves, maxMoves - moves));
     return false;
 }
 
