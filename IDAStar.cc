@@ -26,6 +26,7 @@
 #include "Dir.hh"
 #include "IDAStar.hh"
 #include "Problem.hh"
+#include "Timer.hh"
 
 #define DEBUG0(x) do { } while (0)
 #define DEBUG1(x) cout << x << endl
@@ -104,21 +105,30 @@ private:
     int _minMovesLeft;
 };
 
+extern long long totalNodesGenerated;
+
 // global variables to describe current search state
 static int maxMoves;
 static int moves;
 static IDAStarState state;
 static deque<Move> solution;
+static long long nodesGenerated, lastOutput;
+static Timer timer;
 
 static bool dfs();
 deque<Move> IDAStar(int maxDist) {
     DEBUG0("IDAStar" << maxDist);
     maxMoves = maxDist;
     moves = 0;
+    nodesGenerated = 1;
+    lastOutput = 0;
     state = IDAStarState(0);
     solution.clear();
+
+    timer.reset();
     dfs();
-    
+    totalNodesGenerated += nodesGenerated;
+
     return solution;
 }
 
@@ -135,6 +145,16 @@ static bool dfs() {
     if (minTotalMoves > maxMoves)
 	return false;
 
+    if (nodesGenerated - lastOutput > 2000000) {
+	lastOutput = nodesGenerated;
+	cout << state << endl
+	     << " Nodes: " << nodesGenerated
+	     << " moves = " << moves
+	     << " nodes/second: "
+	     << (long long) (double(nodesGenerated) / timer.seconds())
+	     << endl;
+    }
+
     // generate all moves...
     for (int atomNo = 0; atomNo < NUM_ATOMS; ++atomNo) {
 	Pos startPos = state.position(atomNo);
@@ -150,6 +170,7 @@ static bool dfs() {
 		IDAStarMove move(startPos, newPos);
 		state.apply(move);
 		++moves;
+		++nodesGenerated;
 		if (dfs()) {
 		    solution.push_front(Move(atomNo, startPos, newPos, dir));
 		    return true;
