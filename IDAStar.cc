@@ -68,7 +68,7 @@ static HashTable<IDAStarCacheState> cachedStates;
 
 static bool dfs(Move lastMove, const State& state, int minMovesLeft);
 deque<Move> IDAStar(int maxDist) {
-    maxDist = 31;		// HACK HACK HACK for unitopia_06
+    //maxDist = 31;		// HACK HACK HACK for unitopia_06
     DEBUG0("IDAStar" << maxDist);
     moves = 0;
     ++Statistics::statesGenerated;
@@ -227,6 +227,7 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 
 		State newState(state, move);
 		++Statistics::statesGenerated;
+		++Statistics::statesGeneratedAtDepth[maxMoves];
 		int newMinMovesLeft = newState.minMovesLeft();
 
 		switch (newMinMovesLeft - minMovesLeft) {

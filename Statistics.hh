@@ -37,6 +37,7 @@ public:
     static void print(std::ostream& out);
 
     static uint64_t statesGenerated;
+    static uint64_t statesGeneratedAtDepth[128];
     static uint64_t statesExpanded;
     static uint64_t numChildren;
     static uint64_t numPruned;
