@@ -29,6 +29,10 @@ class Problem;
 
 #include "Move.hh"
 
+#define DO_REVERSE_SEARCH 0
+// max. distance from goal for bidirectional search
+static const int REV_SEARCH_MAX_GOAL_DIST = 6;
+
 using namespace std;
 
 class State2 {
