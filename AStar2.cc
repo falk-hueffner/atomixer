@@ -139,7 +139,6 @@ int findBest(int maxMoves) {
 }
 
 deque<Move> aStar2(const State2& start, int maxMoves) {
-    timer.reset();
     nodesGenerated = 0;
     if (start.minTotalMoves() > maxMoves)
 	return deque<Move>();	// saves the allocations which can take quite some time
@@ -163,6 +162,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
     hashInsert(start);
     ++totalNodes;
 
+    timer.reset();
     while (true) {
 	int bestIndex = findBest(maxMoves);
 	DEBUG0("bestIndex: " << bestIndex);
