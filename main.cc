@@ -32,6 +32,9 @@
 #include "Statistics.hh"
 #include "parameters.hh"
 
+#define USE_IDASTAR 1		// IDA*
+//#undef USE_IDASTAR		// A*
+
 #ifdef USE_IDASTAR
 # include "IDAStar.hh"
 #else
