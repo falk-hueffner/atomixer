@@ -33,8 +33,8 @@ typedef long long int64_t;
 #include "Level.hh"
 #include "Problem.hh"
 #include "State2.hh"
-#include "AStar2.hh"
-//#include "IDAStar.hh"
+//#include "AStar2.hh"
+#include "IDAStar.hh"
 
 using namespace std;
 
@@ -106,8 +106,8 @@ int main(int argc, char* argv[]) {
 		 << " --------------------\n";
 	    Problem::setGoal(level, goalNr);
 	    State2 start(Problem::startPositions());
-	    deque<Move> moves = aStar2(start, maxMoves);
-	    //deque<Move> moves = IDAStar(maxMoves);
+	    //deque<Move> moves = aStar2(start, maxMoves);
+	    deque<Move> moves = IDAStar(maxMoves);
 	    if (moves.size() > 0) {
 		State2 state = start;
 		for (deque<Move>::const_iterator m = moves.begin();
