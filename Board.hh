@@ -38,6 +38,7 @@ public:
     Board(map<string, string> lines, string key, int len);
 
     const Atom& field(int x, int y) const { return myFields[x][y]; }
+    const Atom& field(Pos p) const { return myFields[p.x()][p.y()]; }
     Pos find(const Atom& atom) const;
 
 private:
