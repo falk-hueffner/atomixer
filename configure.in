@@ -20,7 +20,7 @@ if test x"$profile" = xyes; then
 fi
 
 if test x"$ac_cv_prog_gxx" = xyes; then
-   CXXFLAGS="$CXXFLAGS -W -Wall -Wno-sign-compare -ansi -pedantic"
+   CXXFLAGS="$CXXFLAGS -W -Wall -Wno-sign-compare"
 else
    # Hack for Compaq C++
    CXXFLAGS="$CXXFLAGS -D__USE_STD_IOSTREAM -fast -g3 -W -Wall -Wno-sign-compare"
