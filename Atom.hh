@@ -32,9 +32,9 @@ public:
     Atom();
     Atom(const string& s);
 
-    bool isEmpty() const { return myID == 0; }
-    bool isBlock() const { return myID == 1; }
-    bool isAtom()  const { return myID >  1; }
+    bool isEmpty() const { return myID == ' '; }
+    bool isBlock() const { return myID == '#'; }
+    bool isAtom()  const { return !isEmpty() && !isBlock(); }
 
     vector<string> toAscii() const;
 
@@ -42,17 +42,12 @@ public:
     bool operator==(const Atom& other) const;
 
 private:
-    enum Connections { C_N  = (1 << 0), C_NE = (1 << 1),  C_E  = (1 << 2),
-		       C_SE = (1 << 3), C_S  = (1 << 4),  C_SW = (1 << 5),
-                       C_W  = (1 << 6), C_NW = (1 << 7),  C_N2 = (1 << 8),
-                       C_E2 = (1 << 9), C_S2 = (1 << 10), C_W2 = (1 << 11) };
-
-    static const char chars[];
+    static const char idMap[][2];
     static const int coords[][2];
     static const char bindings[][4];
     static const int NUM_DIRS = 8;
 
-    int myID;
+    char myID;
     int myNumConnections[NUM_DIRS];
 };
 

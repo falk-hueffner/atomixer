@@ -25,7 +25,19 @@
 
 using namespace std;
 
-const char Atom::chars[] = { ' ', '#', 'H', 'C', 'O', 'N', '?', 'F', 'L' };
+const char Atom::idMap[][2] = {{'.', ' '},
+			       {'#', '#'},
+			       {'1', 'H'},
+			       {'2', 'C'},
+			       {'3', 'O'},
+			       {'4', 'N'},
+			       {'5', 'S'},
+			       {'6', 'F'},
+			       {'7', 'L'}, // Cl actually
+			       {'o', 'o'}, // "crystal"
+			       {'A', '-'},
+			       {'C', '|'},
+			       {  0,   0}};
 
 const int Atom::coords[][2] = {{0, 1}, {0, 2}, {1, 2}, {2, 2},
 			       {2, 1}, {2, 0}, {1, 0}, {0, 0}};
@@ -52,7 +64,7 @@ const char Atom::bindings[][4] = {{' ', '|',  '"', '3'},
 
 */
 
-Atom::Atom() : myID(0) {
+Atom::Atom() : myID(' ') {
     for (int i = 0; i < NUM_DIRS; ++i)
 	myNumConnections[i] = 0;
 }
@@ -60,10 +72,18 @@ Atom::Atom() : myID(0) {
 Atom::Atom(const string& s) {
     for (int i = 0; i < NUM_DIRS; ++i)
 	myNumConnections[i] = 0;
-    if (s == "#")
-	myID = 1;
-    else
-	myID = s[0] - '0' + 1;	// we shift the number by 1 to make space for '#'
+
+    myID = 0;
+    for (int i = 0; idMap[i][0] != 0; ++i) {
+	if (s[0] == idMap[i][0]) {
+	    myID = idMap[i][1];
+	    break;
+	}
+    }
+    if (myID == 0) {
+	cerr << "Warning: unrecognized atom type\n";
+	myID = '#';
+    }
 
     for (int i = 2; i < s.length(); ++i) {
 	if ((s[i] >= 'a' && s[i] <= 'h'))
@@ -109,7 +129,7 @@ vector<string> Atom::toAscii() const {
     for (int i = 0; i < NUM_DIRS; ++i)
 	ascii[coords[i][0]][coords[i][1]] = bindings[i][myNumConnections[i]];
 
-    ascii[1][1] = chars[myID];
+    ascii[1][1] = myID;
 
     return ascii;
 }
