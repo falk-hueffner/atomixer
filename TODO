@@ -1,6 +1,8 @@
 Algorithms:
+* MREC
 * BDDs?
 * Partial IDA*?
+* overestimating A* for upper bounds
 
 Heuristic:
 * linear conflicts?
@@ -9,5 +11,4 @@ Heuristic:
 Code:
 * make Pos() explicit?
 * more than 2 identical atoms
-* hash function
 * hash table
