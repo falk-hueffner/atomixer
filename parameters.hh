@@ -23,8 +23,6 @@
 #define PARAMETERS_HH
 
 // maximum amount of memory to be used
-static const unsigned int MEMORY = 30 * 1024 * 1024;
-
-#define ALGORITHM_NAME "idastar"
+static const unsigned int MEMORY = 35 * 1024 * 1024;
 
 #endif

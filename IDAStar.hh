@@ -29,6 +29,50 @@
 #undef DO_BACKWARD_SEARCH	// normal forward search
 //#define DO_BACKWARD_SEARCH 1	// search from goal toward starting position
 
+#undef DO_PREHEATING
+//#define DO_PREHEATING 1
+
+//#undef DO_MOVE_PRUNING
+#define DO_MOVE_PRUNING 1
+
+#undef DO_MAY_MOVE_PRUNING
+//#define DO_MAY_MOVE_PRUNING 1
+
+#undef DO_CACHING
+//#define DO_CACHING 1
+
+//#undef DO_PARTIAL
+#define DO_PARTIAL 1
+
+#undef DO_STOCHASTIC_CACHING
+//#define DO_STOCHASTIC_CACHING 1
+
+#define CACHE_INSERT_PROBABILITY 0.1
+
+static const char* ALGORITHM_NAME = "idastar"
+#ifdef DO_BACKWARD_SEARCH
+  "-backward"
+#endif
+#ifndef DO_PREHEATING
+  "-nopreheat"
+#endif
+#ifndef DO_MOVE_PRUNING
+  "-nomoveprune"
+#endif
+#ifdef DO_MAY_MOVE_PRUNING
+  "-maymoveprune"
+#endif
+#if !defined(DO_CACHING) && !defined(DO_PARTIAL)
+  "-nocaching"
+#endif
+#ifdef DO_PARTIAL
+  "-partial"
+#endif
+#ifdef DO_STOCHASTIC_CACHING
+  "-stochastic"
+#endif
+;
+
 deque<Move> IDAStar(int maxDist);
 
 #endif
