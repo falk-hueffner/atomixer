@@ -42,8 +42,8 @@ inline int noOfDir(Dir dir) {
     case DOWN: return 1;
     case LEFT: return 2;
     case RIGHT: return 3;
+    default: abort();
     }
-    abort();
     return 0;			// avoid stupid cxx warning
 }
 
@@ -53,8 +53,8 @@ inline int noOfOppositeDir(Dir dir) {
     case DOWN: return 0;
     case LEFT: return 3;
     case RIGHT: return 2;
+    default: abort();
     }
-    abort();
     return 0;
 }
 
