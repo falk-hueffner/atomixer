@@ -38,6 +38,12 @@
 
 using namespace std;
 
+//#undef DO_MOVE_PRUNING
+#define DO_MOVE_PRUNING 1
+
+#undef DO_MOVE_ORDERING
+//#define DO_MOVE_ORDERING 1
+
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
@@ -77,9 +83,16 @@ deque<Move> IDAStar(int maxDist) {
 		DEBUG1("Pre-heating with maxDist = " << maxMoves);
 		dfs(Move());
 		assert(solution.empty());
+		for (HashTable<IDAStarCacheState>::Iterator it = cachedStates.begin();
+		    it != cachedStates.end(); ++it)
+		    ++((*it).minMovesFromStart); // to force re-expansion
 	    }
 	    DEBUG1("Pre-heated cache.");
 	}
+    } else {
+	for (HashTable<IDAStarCacheState>::Iterator it = cachedStates.begin();
+	     it != cachedStates.end(); ++it)
+	    ++((*it).minMovesFromStart); // to force re-expansion
     }
     maxMoves = maxDist;
 
@@ -125,7 +138,7 @@ static bool dfs(Move lastMove) {
 
     if (cachedState != NULL) {
 	DEBUG0("found" << state << " in cache");
-	if (cachedState->minMovesFromStart < moves)
+	if (cachedState->minMovesFromStart <= moves)
 	    return false;
 	else if (cachedState->minMovesFromStart > moves)
 	    cachedState->minMovesFromStart = moves;
@@ -138,7 +151,7 @@ static bool dfs(Move lastMove) {
 	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
 					      moves, state.minMovesLeft()));
 
-    if ((Statistics::statesGenerated & 0xffffff) == 0) {
+    if ((Statistics::statesExpanded & 0xfffff) == 0) {
 	cout << state << " / " << maxMoves << endl
 	     << " cached: " << cachedStates.size()
 	     << " / " << cachedStates.capacity()
@@ -149,7 +162,22 @@ static bool dfs(Move lastMove) {
 
     // generate all moves...
     ++Statistics::statesExpanded;
+#ifndef DO_MOVE_ORDERING
     for (int atomNr = 0; atomNr < NUM_ATOMS; ++atomNr) {
+#else
+    for (int i = 0; i < NUM_ATOMS; ++i) {
+        int atomNr;
+        if (moves > 0) {
+            if (i == 0)
+                atomNr = lastMove.atomNr();
+            else if (i == lastMove.atomNr())
+                atomNr = 0;
+            else
+                atomNr = i;
+        } else {
+            atomNr = i;
+        }
+#endif
 	Pos startPos = state.atomPosition(atomNr);
 	for (int dirNo = 0; dirNo < 4; ++dirNo) {
 	    Dir dir = DIRS[dirNo];
@@ -179,6 +207,10 @@ static bool dfs(Move lastMove) {
 			}
 		    }
 		}
+		unsigned char oldatoms[NUM_ATOMS];
+		for (int i = 0; i < NUM_ATOMS; ++i)
+		    oldatoms[i] = state.atomPosition(i);
+
 		state.apply(move);
 		++moves;
 		++Statistics::statesGenerated;
@@ -187,13 +219,13 @@ static bool dfs(Move lastMove) {
 		    return true;
 		}
 		--moves;
-		state.undo(move);
+		state.undo(move, oldatoms);
 	    }
 	}
     }
     if (cachedStates.size() < cachedStates.capacity())
 	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
-					       moves, (maxMoves + 0) - moves));
+					       moves, (maxMoves + 1) - moves));
     // FIXME what is the correct value??
     return false;
 }
