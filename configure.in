@@ -26,4 +26,7 @@ else
    CXXFLAGS="$CXXFLAGS -D__USE_STD_IOSTREAM -fast -g3 -W -Wall -Wno-sign-compare"
 fi
 
+AC_LANG_CPLUSPLUS
+AC_CHECK_HEADERS(hash_map ext/hash_map sstream)
+
 AC_OUTPUT(Makefile)
