@@ -133,45 +133,6 @@ int findBest(int maxMoves) {
     }
 }
 
-int findBest2(int maxMoves) {
-    int numNodes = 0;
-    DEBUG0("State2s: " << states.size());
-    DEBUG1("Finding best state starting from " << firstOpen << '.');
-    int i;
-    for (i = firstOpen; i < states.size() && !states[i].isOpen; ++i) { }
-    if (i == states.size()) {
-	DEBUG1("No open node left at all!");
-	return 0;
-    }
-    numNodes = i - firstOpen;
-    firstOpen = i;
-
-    DEBUG1("First open: " << firstOpen << '.');
-    while (true) {
-	DEBUG1("Looking for states with max. " << minMinTotalMoves
-	     << " minTotalMoves, starting from " << firstOpen << '.');
-
-	for (int i = firstOpen; i < states.size(); ++i) {
-	    if (states[i].isOpen) {
-		if (states[i].minTotalMoves() <= minMinTotalMoves) {
-		    if (states[i].minTotalMoves() != minMinTotalMoves)
-			DEBUG1("*** WEIRD ***");
-		    DEBUG1("Best is " << i
-			   << ". Looked at " << numNodes << " states.");
-		    return i;
-		}
-	    }
-	    ++numNodes;
-	}
-	DEBUG1("No states with max. " << minMinTotalMoves << " minTotalMoves.");
-	if (++minMinTotalMoves > maxMoves) {
-	    DEBUG1("No states within limit of " << maxMoves << " moves.");
-	    return 0;
-	}
-	searchIndex = firstOpen;
-    }
-}
-
 deque<Move> aStar2(const State2& start, int maxMoves) {
     DEBUG1("MAX_STATES = " << MAX_STATES);
     DEBUG1("MAX_HASHES = " << MAX_HASHES);
