@@ -124,6 +124,8 @@ static bool dfs(IDAStarMove lastMove) {
 	lastOutput = nodesGenerated;
 	cout << state << endl
 	     << " Nodes: " << nodesGenerated
+	     << " cached: " << cachedStates.size()
+	     << " / " << cachedStates.capacity()
 	     << " moves = " << moves
 	     << " nodes/second: "
 	     << (int64_t) (double(nodesGenerated) / timer.seconds())
@@ -144,7 +146,9 @@ static bool dfs(IDAStarMove lastMove) {
 		DEBUG0(spaces(moves) << "moves to " << newPos);
 		IDAStarMove move(atomNo, dir, startPos, newPos);
 		if (moves > 0) {
-		    if (atomNo < lastMove.atomNo) {
+		    if (atomNo == lastMove.atomNo && dir == -lastMove.dir)
+			continue;
+		    } else if (atomNo < lastMove.atomNo) {
 			// this is only allowed if the two moves are not independent.
 			if (!(between(lastMove.p1, lastMove.p2, lastMove.dir, newPos)
 			      || newPos + dir == lastMove.p2
@@ -162,14 +166,13 @@ static bool dfs(IDAStarMove lastMove) {
 		}
 		--moves;
 		state.undo(move);
-		if (cachedStates.size() < cachedStates.capacity())
-		    cachedStates.insert(IDAStarPackedState(state.positions(),
-							   //moves, (maxMoves + 1) - moves));
-							   moves, maxMoves - moves));
 	    }
 	}
     }
-
+    if (cachedStates.size() < cachedStates.capacity())
+	cachedStates.insert(IDAStarPackedState(state.positions(),
+					       //moves, (maxMoves + 1) - moves));
+					       moves, maxMoves - moves));
     return false;
 }
 
