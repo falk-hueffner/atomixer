@@ -162,11 +162,6 @@ static inline bool between(Pos p1, Pos p2, Dir dir, Pos pm) {
 static bool dfs(const Move& lastMove) {
     DEBUG0(spaces(state.moves()) << "dfs: moves =  "
 	   << state.moves() << " state = " << state);
-    // FIXME do this earlier
-    if (state.minMovesLeft() == 0)
-	return true;		// not true for all heuristics, but for this one
-    if (state.minTotalMoves() > maxMoves)
-	return false;
 
 #ifdef DO_CACHING
     IDAStarCacheState cacheState(state);
@@ -254,6 +249,13 @@ static bool dfs(const Move& lastMove) {
 	    ++Statistics::statesGenerated;
 	    ++Statistics::statesGeneratedAtDepth[maxMoves];
 
+	    if (state.minMovesLeft() == 0) {
+		solution.push_front(move);	    
+		return true; // not true for all heuristics, but for this one
+	    }
+	    if (state.minTotalMoves() > maxMoves)
+		goto skip;
+
 #ifdef DO_PARTIAL
 	    // ugh... 64 bit modulo is dog slow on i386...
 	    uint64_t hash1 = newState.hash64_1() % stateBits.numBits();
@@ -262,8 +264,7 @@ static bool dfs(const Move& lastMove) {
 	    int bitsSet = stateBits.isSet(hash1) + stateBits.isSet(hash2);
 	    if (bitsSet == 2) {
 		DEBUG0(" bits already set");
-		state.undo(move, oldMinMovesLeft);
-		continue;
+		goto skip;
 	    }
 	    if (doAddBits) {
 		stateBits.set(hash1);
@@ -292,6 +293,7 @@ static bool dfs(const Move& lastMove) {
 		    abort();
 	    }
 
+	skip:
 	    state.undo(move, oldMinMovesLeft);
 	}
     }
