@@ -36,9 +36,9 @@ if test x"$ac_cv_prog_gxx" = xyes; then
    else
      CXXFLAGS="$CXXFLAGS -fomit-frame-pointer"
    fi
-   case $(uname -m) in
+   case `uname -m` in
      alpha)
-       cpu=$(awk '/cpu model/ {print tolower($4)}' /proc/cpuinfo)
+       cpu=`awk '/cpu model/ {print tolower($4)}' /proc/cpuinfo`
        CXXFLAGS="$CXXFLAGS -mcpu=$cpu"
        ;;
      i?86)
