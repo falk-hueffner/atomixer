@@ -40,19 +40,42 @@ public:
     ConstIterator end() const { return elements.end(); }
 
     size_t size() const { return elements.size() - 1; }
+    size_t capacity() const { return elements.capacity() - 1; }
     
-    HashTable() {
-	clear();
+    HashTable(int numElements, double nloadFactor) {
+	loadFactor = nloadFactor;
+	clear(numElements);
     }
 
-    void clear() {
+    HashTable() {
 	loadFactor = 2.0;
+	clear(256);
+    }
+
+    void clear(int initialSize) {
 	elements.clear();
+	cout << "Reserving space for " << initialSize + 1 << " elems.\n";
+	elements.reserve(initialSize + 1);
+	cout << "capacity is: " << elements.capacity() << endl;
+	cout << "capacity is: " << capacity() << endl;
 	elements.push_back(Element()); // 0 reserved for 'empty'
 	hashTable.clear();
-	hashTable.resize(256);
+	hashTable.resize(int((initialSize + 1) * loadFactor));
     }
 
+    Element* find(const Element& element) { // should be const...
+	int hash = element.hash() % hashTable.size();
+	while (true) {
+	    if (hashTable[hash] == 0) 
+		return NULL;
+	    else if (elements[hashTable[hash]] == element)
+		return &elements[hashTable[hash]];
+	    if (++hash >= hashTable.size())
+		hash = 0;
+	}	
+    }
+
+    /*
     ConstIterator find(const Element& element) const {
 	int hash = element.hash() % hashTable.size();
 	while (true) {
@@ -64,6 +87,7 @@ public:
 		hash = 0;
 	}
     }
+    */
 
     void insertNew(const Element& element) {
 	int hash = element.hash() % hashTable.size();
@@ -90,8 +114,10 @@ public:
 		hashTable[hash] = elements.size() - 1;
 		return;
 	    } else {
-		if (element == elements[hashTable[hash]])
-			return;
+		if (element == elements[hashTable[hash]]) {
+		    elements[hashTable[hash]].update(element);
+		    return;
+		}
 	    }
 	    if (++hash >= hashTable.size())
 		hash = 0;
