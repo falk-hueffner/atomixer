@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     cout << "Solving " << levelName << "...\n";
 
     //int knownLowerBound = 0;
-    int knownLowerBound = 35;
+    int knownLowerBound = 0;
 
     /*
     ifstream statStream("stats");
