@@ -240,7 +240,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 		continue;
 	    }
 	    if (newState2.minTotalMoves() < minMinTotalMoves) {
-		// This can't happen if the heuristic is admissible
+		// This can't happen if the heuristic is monotone
 		DEBUG1("minTotalMoves of " << newState2.minTotalMoves()
 		       << " smaller than previous minMinTotalMoves of "
 		       << minMinTotalMoves);
