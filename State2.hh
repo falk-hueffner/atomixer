@@ -43,20 +43,20 @@ public:
     bool operator==(const State2& other) const;
     size_t hash() const;
 
-    //const unsigned char* atomPositions() const { return atomPositions; }
-
     vector<Move> moves() const;
     void calcMinMovesLeft();
     int minMovesLeft() const { return _minMovesLeft; }
     int minTotalMoves() const { return numMoves + minMovesLeft(); }
 
-
-//private:
     int predecessor;
     unsigned char atomPositions[NUM_ATOMS];
     unsigned char _minMovesLeft;
     unsigned int numMoves : 7;
     bool isOpen		  : 1;
-};
+}
+#if HAVE_ATTRIBUTE_PACKED
+    __attribute__ ((packed))
+#endif
+    ;
 
 #endif
