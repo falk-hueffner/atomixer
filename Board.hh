@@ -26,6 +26,8 @@
 #include <map>
 #include <string>
 
+class State;
+
 #include "Atom.hh"
 #include "Pos.hh"
 
@@ -36,6 +38,7 @@ class Board {
 public:
     Board() { }			// leave everything blank
     Board(map<string, string> lines, string key, int len);
+    Board(const State& state);
 
     const Atom& field(int x, int y) const { return myFields[x][y]; }
     const Atom& field(Pos p) const { return myFields[p.x()][p.y()]; }

@@ -24,10 +24,12 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <strstream>
+#include <backward/strstream.h>
 #include <string>
 
 #include "Board.hh"
+#include "State.hh"
+#include "Problem.hh"
 
 using namespace std;
 
@@ -60,6 +62,19 @@ Board::Board(map<string, string> lines, string key, int len) {
 	floodFill(0, y);
 	floodFill(XSIZE - 1, y);
     }
+}
+
+Board::Board(const State& state) {
+    for (Pos pos = 0; pos != Pos::end(); ++pos)
+	if (Problem::isBlock(pos))
+	    myFields[pos.x()][pos.y()] = Atom("#");
+	else
+	    myFields[pos.x()][pos.y()] = Atom(".");
+    for (int i = 0; i < NUM_ATOMS; ++i) {
+	Pos pos = state.atomPositions()[i];
+	myFields[pos.x()][pos.y()] = Problem::atom(i);
+    }
+
 }
 
 Pos Board::find(const Atom& atom) const {
