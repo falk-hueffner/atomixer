@@ -40,8 +40,8 @@ public:
     ConstIterator end() const { return elements.end(); }
 
     size_t size() const { return elements.size() - 1; }
-    size_t capacity() const { return elements.capacity() - 2; }
-    
+    size_t capacityLeft() const { return elements.capacity() - elements.size(); }
+
     HashTable(int numElements, double nloadFactor) {
 	clear(numElements, nloadFactor);
     }
@@ -70,20 +70,6 @@ public:
 		hash = 0;
 	}	
     }
-
-    /*
-    ConstIterator find(const Element& element) const {
-	int hash = element.hash() % hashTable.size();
-	while (true) {
-	    if (hashTable[hash] == 0) 
-		return end();
-	    else if (elements[hashTable[hash]] == element)
-		return elements.begin() + hashTable[hash];
-	    if (++hash >= hashTable.size())
-		hash = 0;
-	}
-    }
-    */
 
     void insertNew(const Element& element) {
 	int hash = element.hash() % hashTable.size();
