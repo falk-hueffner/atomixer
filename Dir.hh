@@ -22,6 +22,8 @@
 #ifndef DIR_HH
 #define DIR_HH
 
+#include <stdlib.h>
+
 #include <iosfwd>
 
 #include "Size.hh"
@@ -40,6 +42,7 @@ inline int noOfDir(Dir dir) {
     case DOWN: return 1;
     case LEFT: return 2;
     case RIGHT: return 3;
+    default: abort();
     }
 }
 
@@ -49,6 +52,7 @@ inline int noOfOppositeDir(Dir dir) {
     case DOWN: return 0;
     case LEFT: return 3;
     case RIGHT: return 2;
+    default: abort();
     }
 }
 
