@@ -1,6 +1,10 @@
 #! /bin/sh
 
+timelimit=10
+
 exec 6>batch.$$.log
+
+./timeguard.sh atomixer $timelimit &
 
 for i in `cat stats | awk '{print "levels/"$1}'`; do
     if [ -f $i ]; then
@@ -16,3 +20,5 @@ for i in `cat stats | awk '{print "levels/"$1}'`; do
 	fi
     fi
 done
+
+killall timeguard.sh
