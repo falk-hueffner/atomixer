@@ -107,7 +107,7 @@ void State2::calcMinMovesLeft() {
 	    + Problem::goalDist(i + 1, atomPositions[i]);
 	_minMovesLeft += min(moves1, moves2);
     }
-#if DO_REVERSE_SEARCH
+#ifdef DO_REVERSE_SEARCH
     if (_minMovesLeft <= REV_SEARCH_MAX_GOAL_DIST) {
 	RevState revState(atomPositions); // FIXME silly
 	HashTable<RevState>::ConstIterator i
