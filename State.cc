@@ -197,7 +197,7 @@ void State::canonicallify(int atomNr) {
     }
 }
 
-std::ostream& operator<<(std::ostream& out, const State& state) {
+inline std::ostream& operator<<(std::ostream& out, const State& state) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	out << Pos(state.atomPositions_[i]) << ' ';
 

@@ -29,7 +29,6 @@ atomixer_SOURCES = \
 	Problem.cc	\
 	Problem.hh	\
 	Size.hh		\
-	State.cc	\
 	State.hh	\
 	Statistics.cc	\
 	Statistics.hh	\
