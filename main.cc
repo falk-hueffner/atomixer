@@ -33,6 +33,8 @@
 
 using namespace std;
 
+long long totalNodesGenerated;
+
 string isotime() {
     time_t timet = time(NULL);
     char timestr[256];
