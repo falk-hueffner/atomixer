@@ -31,87 +31,25 @@ typedef long long int64_t;
 
 #include "Dir.hh"
 #include "IDAStar.hh"
+#include "IDAStarState.hh"
+#include "IDAStarPackedState.hh"
 #include "Problem.hh"
 #include "Timer.hh"
+#include "HashTable.hh"
 
 #define DEBUG0(x) do { } while (0)
 #define DEBUG1(x) cout << x << endl
 
 using namespace std;
 
-class IDAStarMove {
-    friend class IDAStarState;
-public:
-    IDAStarMove(Pos np1, Pos np2) : p1(np1), p2(np2) { }
-
-private:
-    Pos p1, p2;
-};
-
-class IDAStarState {
-    friend ostream& operator<<(ostream& out, const IDAStarState& state);
-public:
-    typedef int Field;
-    static const Field EMPTY = -1;
-    static const Field BLOCK = NUM_ATOMS;
-
-    IDAStarState() { }		// leave uninitialized
-    IDAStarState(int /* dummy */) {
-	for (Pos pos = 0; pos != Pos::end(); ++pos) {
-	    _fields[pos.fieldNumber()] = EMPTY;
-	    if (Problem::isBlock(pos))
-		_fields[pos.fieldNumber()] = BLOCK;
-	}
-	for (int i = 0; i < NUM_ATOMS; ++i) {
-	    _positions[i] = Problem::startPosition(i);
-	    _fields[Problem::startPosition(i).fieldNumber()] = i;
-	}
-
-	calcMinMovesLeft();
-    }
-
-    void apply(const IDAStarMove& move) {
-	int atomNr = _fields[move.p1.fieldNumber()];
-	DEBUG0("applying " << atomNr << ' ' << move.p1 << " -> " << move.p2);
-	_fields[move.p2.fieldNumber()] = atomNr;
-	_fields[move.p1.fieldNumber()] = EMPTY;
-	_positions[atomNr] = move.p2;
-	calcMinMovesLeft();
-    }
-
-    void undo(const IDAStarMove& move) {
-	int atomNr = _fields[move.p2.fieldNumber()];
-	_fields[move.p1.fieldNumber()] = atomNr;
-	_fields[move.p2.fieldNumber()] = EMPTY;
-	_positions[atomNr] = move.p1;
-	calcMinMovesLeft();
-    }
-
-    Field field(Pos pos) const { return _fields[pos.fieldNumber()]; }
-    bool isBlocking(Pos pos) const { return _fields[pos.fieldNumber()] != EMPTY; }
-    Pos position(int atomNo) const { return _positions[atomNo]; }
-    int minMovesLeft() const { return _minMovesLeft; }
-
-private:
-    void calcMinMovesLeft() {
-	_minMovesLeft = 0;
-	for (int i = 0; i < NUM_UNIQUE; ++i)
-	    _minMovesLeft += Problem::goalDist(i, _positions[i]);
-	for (int i = PAIRED_START; i < NUM_ATOMS; i += 2) {
-	    int moves1 = Problem::goalDist(i, _positions[i])
-		+ Problem::goalDist(i + 1, _positions[i + 1]);
-	    int moves2 = Problem::goalDist(i, _positions[i + 1])
-		+ Problem::goalDist(i + 1, _positions[i]);
-	    _minMovesLeft += min(moves1, moves2);
-	}
-    }
-
-    Field _fields[NUM_FIELDS];
-    Pos _positions[NUM_ATOMS];
-    int _minMovesLeft;
-};
-
 extern int64_t totalNodesGenerated;
+
+// maximum amount of memory to be used
+static const unsigned int MEMORY = 320 * 1024 * 1024;
+static const double LOAD_FACTOR = 1.4;
+
+static const unsigned int MAX_STATES = (unsigned int)
+    (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(IDAStarPackedState)));
 
 // global variables to describe current search state
 static int maxMoves;
@@ -120,6 +58,7 @@ static IDAStarState state;
 static deque<Move> solution;
 static int64_t nodesGenerated, lastOutput;
 static Timer timer;
+static HashTable<IDAStarPackedState> cachedStates(MAX_STATES, LOAD_FACTOR);
 
 static bool dfs();
 deque<Move> IDAStar(int maxDist) {
@@ -130,6 +69,10 @@ deque<Move> IDAStar(int maxDist) {
     lastOutput = 0;
     state = IDAStarState(0);
     solution.clear();
+    //DEBUG1(cachedStates.capacity() << " 1 " << MAX_STATES);
+    //if (cachedStates.capacity() != MAX_STATES)
+    //cachedStates = HashTable<IDAStarPackedState>(MAX_STATES, LOAD_FACTOR);
+    //DEBUG1(cachedStates.capacity() << " 2 " << MAX_STATES);
 
     timer.reset();
     dfs();
@@ -148,6 +91,20 @@ static bool dfs() {
 	return true;		// not true for all heuristics, but for this one
     if (moves + state.minMovesLeft() > maxMoves)
 	return false;
+
+    IDAStarPackedState* cachedState =
+	cachedStates.find(IDAStarPackedState(state.positions()));
+
+    if (cachedState != NULL) {
+	DEBUG0("found" << state << " in cache");
+	if (cachedState->minMovesFromStart < moves)
+	    return false;
+	else if (cachedState->minMovesFromStart > moves)
+	    cachedState->minMovesFromStart = moves;
+
+	if (moves + cachedState->minMovesLeft > maxMoves)
+	    return false;
+    }
 
     if (nodesGenerated - lastOutput > 2000000) {
 	lastOutput = nodesGenerated;
@@ -181,6 +138,10 @@ static bool dfs() {
 		}
 		--moves;
 		state.undo(move);
+		if (cachedStates.size() < cachedStates.capacity())
+		    cachedStates.insert(IDAStarPackedState(state.positions(),
+							   //moves, (maxMoves + 1) - moves));
+							   moves, maxMoves - moves));
 	    }
 	}
     }
