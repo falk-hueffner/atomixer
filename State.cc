@@ -61,10 +61,12 @@ vector<Move> State::moves() const {
 
 int State::minMovesLeft() const {
     int minMovesLeft = 0;
+    //cout << "--minMovesLeft-- " << *this << endl;
     for (int i = 0; i < myAtomPositions.size(); ++i) {
 	if (myAtomPositions[i] != Problem::goalPosition(i))
 	    ++minMovesLeft;
     }
+    //cout << "--end minMovesLeft-- " << minMovesLeft << endl;
 
     return minMovesLeft;
 }

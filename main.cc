@@ -27,6 +27,7 @@
 #include "Level.hh"
 #include "Problem.hh"
 #include "State.hh"
+#include "AStar.hh"
 
 using namespace std;
 
@@ -50,14 +51,27 @@ int main(int argc, char* argv[]) {
     ifstream levelStream(argv[1]);
     assert(levelStream);
     Level level(levelStream);
-    Problem::setProblem(level, 0);
-    State state(Problem::startPositions());
-    vector<Move> moves = state.moves();
+    Problem::setLevel(level);
+    State start(Problem::startPositions());
 
     cout << level.startBoard();
-    for (int i = 0; i < moves.size(); ++i)
-	cout << moves[i] << endl;
-    cout << "state.minMovesLeft(): " << state.minMovesLeft() << endl;
+    for (int maxMoves = 1; ; ++maxMoves) {
+	cout << "******************** " << maxMoves << " ********************\n";
+	for (int goalNr = 0; goalNr < level.numGoals(); ++goalNr) {
+	    cout << "-------------------- "
+		 << maxMoves << ": " << level.goalPos(goalNr)
+		 << " --------------------\n";
+	    Problem::setGoal(level, goalNr);
+	    deque<Move> moves = aStar(start, maxMoves);
+	    if (moves.size() > 0) {
+		cout << "Solution in " << moves.size() << " moves.\n";
+		for (deque<Move>::const_iterator m = moves.begin();
+		     m != moves.end(); ++m) {
+		    cout << *m << endl;
+		}
 
-    return 0;
+		return 0;
+	    }
+	}
+    }
 }

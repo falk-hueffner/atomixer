@@ -21,6 +21,8 @@
 
 #include <assert.h>
 
+//# include <iostream.h>
+
 #include "Level.hh"
 #include "Problem.hh"
 
@@ -40,6 +42,7 @@ void Problem::setLevel(const Level& level) {
 }
 
 void Problem::setGoal(const Level& level, int goalPosNr) {
+    myGoalPositions.clear();
     Pos d = level.goalPos(goalPosNr);
     int dx = d.x(), dy = d.y();
     for (int i = 0; i < myStartPositions.size(); ++i) {
@@ -48,5 +51,6 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 	Pos realGoalPos = Pos(goalPos.x() + dx, goalPos.y() + dy);
 	assert(realGoalPos.ok());
 	myGoalPositions.push_back(realGoalPos);
+	//cout << "goal for " << myStartPositions[i] << " is " << realGoalPos << endl;
     }
 }
