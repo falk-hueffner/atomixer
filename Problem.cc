@@ -33,6 +33,7 @@ bool Problem::myIsBlock[NUM_FIELDS];
 Pos Problem::myStartPositions[NUM_ATOMS];
 Pos Problem::myGoalPositions[NUM_ATOMS];
 int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
+Atom Problem::atoms[NUM_ATOMS];
 
 void Problem::setLevel(const Level& level) {
     typedef multimap<Atom, Pos> AtomMap;
@@ -55,6 +56,7 @@ void Problem::setLevel(const Level& level) {
 	Pos pos = pf->second;
 	switch (startAtoms.count(atom)) {
 	case 1:
+	    atoms[numUnique] = atom;
 	    myStartPositions[numUnique] = pos;
 
 	    ++numUnique;
@@ -63,7 +65,9 @@ void Problem::setLevel(const Level& level) {
 	    ++pf;
 	    assert(pf->first == atom);
 	    Pos pos2 = pf->second;
-	    myStartPositions[PAIRED_START + numPaired] = pos;
+	    atoms[PAIRED_START + numPaired    ] = atom;
+	    atoms[PAIRED_START + numPaired + 1] = atom;
+	    myStartPositions[PAIRED_START + numPaired    ] = pos;
 	    myStartPositions[PAIRED_START + numPaired + 1] = pos2;
 
 	    numPaired += 2;
@@ -90,6 +94,7 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 	    goalAtoms.insert(make_pair(atom, goalPos));
 	}
     }
+    // FIXME add asserts
     for (int i = 0; i < NUM_UNIQUE; ++i) {
 	const Atom& atom = level.startBoard().field(myStartPositions[i]);
 	myGoalPositions[i] = goalAtoms.find(atom)->second;
