@@ -34,29 +34,30 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    /*
     assert(argc >= 2);
 
-    cout << "Level           |#A|#G|1x|2x|3x|4x|5x|\n"
-	 << "----------------+--+--+--+--+--+--+--+\n";
-    for (int i = 1; i < argc; ++i) {
-	cout << argv[i] << '\t';
-	ifstream levelStream(argv[i]);
-	assert(levelStream);
-	Level level(levelStream);
-	level.printStats();
-	cout << endl;
+    if (argc > 2) {		// info
+	cout << "Level           |#A|#G|1x|2x|3x|4x|5x|\n"
+	     << "----------------+--+--+--+--+--+--+--+\n";
+	for (int i = 1; i < argc; ++i) {
+	    cout << argv[i] << '\t';
+	    ifstream levelStream(argv[i]);
+	    assert(levelStream);
+	    Level level(levelStream);
+	    level.printStats();
+	    cout << endl;
+	}
+
+	return 0;
     }
-    */
-    assert(argc == 2);
 
     ifstream levelStream(argv[1]);
     assert(levelStream);
     Level level(levelStream);
+    cout << level.startBoard();
     Problem::setLevel(level);
     State start(Problem::startPositions());
 
-    cout << level.startBoard();
 
     string levelName = string(argv[1]);
     while (levelName.find('/') != string::npos)
@@ -83,24 +84,6 @@ int main(int argc, char* argv[]) {
     }
 
     
-    /*
-    for (int goalNr = 0; goalNr < level.numGoals(); ++goalNr) {
-	cout << "-------------------- "
-	     << level.goalPos(goalNr)
-	     << " --------------------\n";
-	Problem::setGoal(level, goalNr);
-	deque<Move> moves = search(start);
-	if (moves.size() > 0) {
-	    cout << "Solution in " << moves.size() << " moves.\n";
-	    for (deque<Move>::const_iterator m = moves.begin();
-		 m != moves.end(); ++m) {
-		cout << *m << endl;
-	    }
-	    
-	    return 0;
-	}
-    }
-    */
     
     for (int maxMoves = knownLowerBound; ; ++maxMoves) {
 	cout << "******************** " << maxMoves << " ********************\n";
@@ -111,6 +94,13 @@ int main(int argc, char* argv[]) {
 	    Problem::setGoal(level, goalNr);
 	    deque<Move> moves = aStar(start, maxMoves);
 	    if (moves.size() > 0) {
+		State state = start;
+		for (deque<Move>::const_iterator m = moves.begin();
+		     m != moves.end(); ++m)
+		    state = State(state, *m);
+		cout << "Final board:\n";
+		cout << Board(state);
+
 		cout << "Solution in " << moves.size() << " moves.\n";
 		for (deque<Move>::const_iterator m = moves.begin();
 		     m != moves.end(); ++m) {
