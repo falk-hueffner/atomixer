@@ -21,6 +21,11 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#if HAVE_STDINT_H
+# include <stdint.h>
+#else
+typedef long long int64_t;
+#endif
 
 #include <iostream>
 #include <fstream>
@@ -33,7 +38,7 @@
 
 using namespace std;
 
-long long totalNodesGenerated;
+int64_t totalNodesGenerated;
 
 string isotime() {
     time_t timet = time(NULL);
