@@ -118,6 +118,7 @@ int main(int argc, char* argv[]) {
 		     m != moves.end(); ++m) {
 		    cout << *m << endl;
 		}
+		cout << "total nodes generated: " << totalNodesGenerated << endl;
 		ofstream boundStream("bounds", ios::app);
 		boundStream << levelName << ": = " << maxMoves << endl;
 
