@@ -27,12 +27,14 @@
 // LARGE_BOARD is defined, the board can be up to 65536 fields big. It
 // also allows for solutions up to a length of 32768 instead of 128.
 
-//#undef LARGE_BOARD
-#define LARGE_BOARD 1
+#if @large_board@
+# define LARGE_BOARD 1
+#else
+# undef LARGE_BOARD
+#endif
 
 // these are hardcoded for speed and simplicity
-//const int XSIZE = 16, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
-const int XSIZE = 18, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
+const int XSIZE = @xsize@, YSIZE = @ysize@, NUM_FIELDS = XSIZE * YSIZE;
 
 const int NUM_UNIQUE = @unique@;
 const int NUM_PAIRED = @paired@;	// note *paired* not *pairs*
