@@ -54,12 +54,10 @@ public:
     uint64_t numBits() const { return numBits_; }
 
     bool isSet(uint64_t index) const {
-	assert(index / BITS_PER_ULONG < numLimbs);
 	return bits[index / BITS_PER_ULONG] & (1UL << (index % BITS_PER_ULONG));
     }
 
     void set(uint64_t index) {
-	assert(index / BITS_PER_ULONG < numLimbs);
 	bits[index / BITS_PER_ULONG] |= 1UL << (index % BITS_PER_ULONG);
     }
 
