@@ -136,15 +136,14 @@ static bool dfs() {
 	return false;
 
     // generate all moves...
-
     for (int atomNo = 0; atomNo < NUM_ATOMS; ++atomNo) {
 	Pos startPos = state.position(atomNo);
 	for (int dirNo = 0; dirNo < 4; ++dirNo) {
 	    Dir dir = DIRS[dirNo];
-	    Pos pos = startPos;
 	    DEBUG0(spaces(moves) << "moving " << atomNo << " @ " << startPos
 		   << ' ' << dir);
-	    while (!state.isBlocking(pos += dir)) { }
+	    Pos pos;
+	    for (pos = startPos + dir; !state.isBlocking(pos); pos += dir) { }
 	    Pos newPos = pos - dir;
 	    if (newPos != startPos) {
 		DEBUG0(spaces(moves) << "moves to " << newPos);
