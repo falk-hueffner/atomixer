@@ -33,6 +33,7 @@ typedef long long int64_t;
 
 #include "AStar2.hh"
 #include "State2.hh"
+#include "IDAStarState.hh"
 #include "Timer.hh"
 
 #define DEBUG0(x) do { } while (0)
@@ -51,13 +52,21 @@ static const unsigned int MAX_HASHES = (unsigned int)
 
 vector<State2> states;
 vector<int> hashTable;
+deque<Move> solution;
 
+static int maxMoves;
 static int minMinTotalMoves;
 static int firstOpen;
 static int searchIndex;
 static int numOpen;
 static int64_t nodesGenerated;
 static Timer timer;
+
+#ifdef DO_MREC
+static int mrecMoves;
+static IDAStarState mrecState;
+static bool idastar();
+#endif
 
 void hashInsert(const State2& state) {
     DEBUG0("inserting " << state);
@@ -144,7 +153,8 @@ int findBest(int maxMoves) {
     }
 }
 
-deque<Move> aStar2(const State2& start, int maxMoves) {
+deque<Move> aStar2(const State2& start, int nmaxMoves) {
+    maxMoves = nmaxMoves;
     nodesGenerated = 0;
     if (start.minTotalMoves() > maxMoves)
 	return deque<Move>();	// saves the allocations which can take quite some time
@@ -208,7 +218,6 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 		     << " \t(" << (states.size() * sizeof(int)) / 1000000
 		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
 		     << "M)\n";
-		deque<Move> solution;
 		State2* pNode = &states[bestIndex];
 		State2* pNextNode;
 
@@ -248,8 +257,55 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	    }
 
 	    if (states.size() == MAX_STATES) {
-		DEBUG1("State table full; giving up.");
+		DEBUG1("State table full.");
+#ifdef DO_MREC
+		for (int i = firstOpen; i < states.size(); ++i) {
+		    DEBUG1("MREC for " << states[i]);
+		    mrecState = states[i].atomPositions;
+		    mrecMoves = states[i].numMoves;
+		    if (idastar()) {
+			// FIXME copy&paste
+			cout << "Found solution.\n"
+			     << "\nstates: " << states.size()
+			     << " \t(" << (states.size() * sizeof(State2)) / 1000000
+			     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
+			     << "M)\nhashes: " << hashTable.size()
+			     << " \t(" << (states.size() * sizeof(int)) / 1000000
+			     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
+			     << "M)\n";
+			State2* pNode = &states[i];
+			State2* pNextNode;
+
+			bool done = false;
+			while (!done) {
+			    if (pNode->predecessor == 1) // start node
+				done = true;
+			    pNextNode = pNode;
+			    DEBUG0("predecessor of " << *pNode
+				   << " is " << pNode->predecessor);
+			    pNode = &states[pNode->predecessor];
+			    
+			    vector<Move> moves = pNode->moves();
+			    
+			    for (vector<Move>::const_iterator m = moves.begin();
+				 m != moves.end(); ++m) {
+				
+				if (State2(*pNode, *m) == *pNextNode) {
+				    solution.push_front(*m);
+				    break;
+				}
+			    }
+			}
+
+			return solution;
+			//end FIXME
+		    }
+		}
+		DEBUG1("IDA* for all open nodes left didn't find anything.");
+		return deque<Move>();
+#else
 		exit(1);
+#endif
 	    }
 
 	    hashInsert(newState2);
@@ -262,3 +318,54 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
     return deque<Move>();
 }
 
+#ifdef DO_MREC
+static bool idastar() {
+    //static int64_t lastOutput;
+
+    DEBUG0(spaces(mrecMoves) << "dfs: moves =  " << mrecMoves
+	   << " state = " << mrecState);
+    if (mrecMoves + mrecState.minMovesLeft() > maxMoves)
+	return false;
+
+    /*
+    if (nodesGenerated - lastOutput > 2000000) {
+	lastOutput = nodesGenerated;
+	cout << mrecState << endl
+	     << " Nodes: " << nodesGenerated
+	     << " moves = " << mrecMoves
+	     << " nodes/second: "
+	     << (int64_t) (double(nodesGenerated) / timer.seconds())
+	     << endl;
+    }
+    */
+
+    // generate all moves...
+    for (int atomNo = 0; atomNo < NUM_ATOMS; ++atomNo) {
+	Pos startPos = mrecState.position(atomNo);
+	for (int dirNo = 0; dirNo < 4; ++dirNo) {
+	    Dir dir = DIRS[dirNo];
+	    DEBUG0(spaces(mrecMoves) << "moving " << atomNo << " @ " << startPos
+		   << ' ' << dir);
+	    Pos pos;
+	    for (pos = startPos + dir; !mrecState.isBlocking(pos); pos += dir) { }
+	    Pos newPos = pos - dir;
+	    if (newPos != startPos) {
+		DEBUG0(spaces(mrecMoves) << "moves to " << newPos);
+		IDAStarMove move(startPos, newPos);
+		mrecState.apply(move);
+		++mrecMoves;
+		++nodesGenerated;
+		++totalNodesGenerated;
+		if (mrecState.minMovesLeft() == 0 || idastar()) {
+		    solution.push_front(Move(atomNo, startPos, newPos, dir));
+		    return true;
+		}
+		--mrecMoves;
+		mrecState.undo(move);
+	    }
+	}
+    }
+
+    return false;
+}
+#endif
