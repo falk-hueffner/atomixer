@@ -105,12 +105,12 @@ private:
 };
 
 // global variables to describe current search state
-int maxMoves;
-int moves;
-IDAStarState state;
-deque<Move> solution;
+static int maxMoves;
+static int moves;
+static IDAStarState state;
+static deque<Move> solution;
 
-bool dfs();
+static bool dfs();
 deque<Move> IDAStar(int maxDist) {
     DEBUG0("IDAStar" << maxDist);
     maxMoves = maxDist;
@@ -122,11 +122,11 @@ deque<Move> IDAStar(int maxDist) {
     return solution;
 }
 
-string spaces(int n) {
+static string spaces(int n) {
     return string(n, ' ');
 }
 
-bool dfs() {
+static bool dfs() {
     DEBUG0(spaces(moves) << "dfs: moves =  " << moves << " state = " << state);
     if (state.minMovesLeft() == 0)
 	return true;		// not true for all heuristics, but for this one
