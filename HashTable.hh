@@ -40,7 +40,7 @@ public:
     ConstIterator end() const { return elements.end(); }
 
     size_t size() const { return elements.size() - 1; }
-    size_t capacity() const { return elements.capacity() - 1; }
+    size_t capacity() const { return elements.capacity() - 2; }
     
     HashTable(int numElements, double nloadFactor) {
 	clear(numElements, nloadFactor);
