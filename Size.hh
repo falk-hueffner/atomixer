@@ -24,5 +24,6 @@
 
 // these are hardcoded for speed and simplicity
 const int XSIZE = 16, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
+const int NUM_ATOMS = 5;
 
 #endif

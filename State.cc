@@ -27,24 +27,28 @@
 
 using namespace std;
 
-State::State(vector<Pos> atomPositions) : myAtomPositions(atomPositions) { }
+State::State(const Pos atomPositions[NUM_ATOMS]) {
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	myAtomPositions[i] = atomPositions[i].fieldNumber();
+}
 
-State::State(const State& state, const Move& move)
-    : myAtomPositions(state.atomPositions()) {
-    myAtomPositions[move.atomNr()] = move.pos2();
+State::State(const State& state, const Move& move) {
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	myAtomPositions[i] = state.myAtomPositions[i];
+    myAtomPositions[move.atomNr()] = move.pos2().fieldNumber();
 }
 
 vector<Move> State::moves() const {
     vector<Move> moves;
-    moves.reserve(myAtomPositions.size() * 3);
+    moves.reserve(NUM_ATOMS * 3);
 
     bool isBlock[NUM_FIELDS];
     for (int i = 0; i < NUM_FIELDS; ++i)
 	isBlock[i] = Problem::isBlock(Pos(i));
-    for (int i = 0; i < myAtomPositions.size(); ++i)
-	isBlock[myAtomPositions[i].fieldNumber()] = true;
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	isBlock[myAtomPositions[i]] = true;
 
-    for (int i = 0; i < myAtomPositions.size(); ++i) {
+    for (int i = 0; i < NUM_ATOMS; ++i) {
 	for (int dirNr = 0; dirNr < 4; ++dirNr) {
 	    Dir dir = dirs[dirNr];
 	    
@@ -62,8 +66,8 @@ vector<Move> State::moves() const {
 int State::minMovesLeft() const {
     int minMovesLeft = 0;
     //cout << "--minMovesLeft-- " << *this << endl;
-    for (int i = 0; i < myAtomPositions.size(); ++i) {
-	if (myAtomPositions[i] != Problem::goalPosition(i))
+    for (int i = 0; i < NUM_ATOMS; ++i) {
+	if (myAtomPositions[i] != Problem::goalPosition(i).fieldNumber())
 	    ++minMovesLeft;
     }
     //cout << "--end minMovesLeft-- " << minMovesLeft << endl;
@@ -72,21 +76,21 @@ int State::minMovesLeft() const {
 }
 
 bool State::operator<(const State& other) const {
-    for (int i = 0; i < myAtomPositions.size(); ++i)
+    for (int i = 0; i < NUM_ATOMS; ++i)
 	if (myAtomPositions[i] != other.myAtomPositions[i])
 	    return myAtomPositions[i] < other.myAtomPositions[i];
     return false;
 }
     
 bool State::operator==(const State& other) const {
-    for (int i = 0; i < Problem::numAtoms(); ++i)
+    for (int i = 0; i < NUM_ATOMS; ++i)
 	if (myAtomPositions[i] != other.myAtomPositions[i])
 	    return false;
     return true;
 }
 
 ostream& operator<<(ostream& out, const State& state) {
-    for (int i = 0; i < state.atomPositions().size(); ++i)
-	out << state.atomPositions()[i] << ' ';
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	out << Pos(state.myAtomPositions[i]) << ' ';
     return out;
 }

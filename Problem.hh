@@ -28,6 +28,7 @@ class Level;
 class Board;
 
 #include "Pos.hh"
+#include "Size.hh"
 
 using namespace std;
 
@@ -37,15 +38,15 @@ public:
     static void setGoal(const Level& level, int goalPosNr);
 
     static bool isBlock(Pos p) { return myIsBlock[p.fieldNumber()]; }
-    static const vector<Pos>& startPositions() { return myStartPositions; }
+    static const Pos* startPositions() { return myStartPositions; }
     static Pos startPosition(int nr) { return myStartPositions[nr]; }
     static Pos goalPosition(int nr) { return myGoalPositions[nr]; }
-    static int numAtoms() { return myStartPositions.size(); }
 
 private:
     static bool myIsBlock[NUM_FIELDS];
-    static vector<Pos> myStartPositions;
-    static vector<Pos> myGoalPositions;
+    static Pos myStartPositions[NUM_ATOMS];
+    static Pos myGoalPositions[NUM_ATOMS];
+    //static int goalDists[NUM_ATOMS][NUM_FIELDS];
 };
 
 #endif
