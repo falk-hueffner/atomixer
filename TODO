@@ -4,10 +4,10 @@ Algorithms:
 * Partial IDA*?
 * overestimating A* for upper bounds (WIDA* [Kor93])
 * Bidirectional search
+* Move pruning for backward search
 
 Heuristic:
 * identical atoms: minimum cost matching?
 
 Code:
 * make Pos() explicit?
-* more than 2 identical atoms: canonicallify position
