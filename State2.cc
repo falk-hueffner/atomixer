@@ -112,34 +112,11 @@ static const int NUM_WORDS = (NUM_ATOMS / sizeof(size_t));// * sizeof(size_t);
 static const size_t REST_MASK
 	= (((size_t) 1) << ((NUM_ATOMS - (NUM_WORDS * sizeof(size_t))) * 8)) - 1;
 
-/*
-size_t State2::hash() const {
-    size_t result = 0;
-    size_t* words = (size_t*) &atomPositions;
-
-    for (int i = 0; i < NUM_WORDS; ++i)
-	result ^= words[i];
-
-    if (REST_MASK != 0)
-	result ^= words[i] & REST_MASK;
-
-    if (result == 0) {
-	return 1;
-    } else {
-	return result;
-    }
-}
-*/
-
 size_t State2::hash() const {
     size_t result = 0;
 
     for (int i = 0; i < NUM_ATOMS; ++i)
 	result = 97 * result + atomPositions[i];
 
-    if (result == 0) {
-	return 1;
-    } else {
-	return result;
-    }
+    return result;
 }
