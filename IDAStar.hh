@@ -26,6 +26,9 @@
 
 #include "Move.hh"
 
+#undef DO_BACKWARD_SEARCH	// normal forward search
+//#define DO_BACKWARD_SEARCH 1	// search from goal toward starting position
+
 deque<Move> IDAStar(int maxDist);
 
 #endif
