@@ -36,28 +36,28 @@ public:
     // leave uninitialized
     State() { }
     // mostly for constructing starting state from the static data in Problem
-    State(const Pos positions[NUM_ATOMS]);
+    inline State(const Pos positions[NUM_ATOMS]);
     // useful for constructing from another State descendant
-    State(const unsigned char positions[NUM_ATOMS]);
+    inline State(const unsigned char positions[NUM_ATOMS]);
     // apply move
-    State(const State& state, const Move& move);
+    inline State(const State& state, const Move& move);
 
     int atomPosition(int atomNr) const { return atomPositions_[atomNr]; }
     const unsigned char* atomPositions() const { return atomPositions_; }
-    int minMovesLeft() const;
+    inline int minMovesLeft() const;
     
-    bool operator==(const State& other) const;
+    inline bool operator==(const State& other) const;
 
-    void apply(const Move& move);
+    inline void apply(const Move& move);
     //void undo(const Move& move); // not easily implementable with canonicallification
 
-    std::vector<Move> moves() const;
-    std::vector<Move> rmoves() const;
+    inline std::vector<Move> moves() const;
+    inline std::vector<Move> rmoves() const;
 
-    size_t hash() const;
+    inline size_t hash() const;
 
 protected:
-    void canonicallify(int atomNr);
+    inline void canonicallify(int atomNr);
 
     unsigned char atomPositions_[NUM_ATOMS];
 }
@@ -65,5 +65,7 @@ protected:
     __attribute__ ((packed))
 #endif
     ;
+
+#include "State.cc"
 
 #endif
