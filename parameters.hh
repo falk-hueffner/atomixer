@@ -22,11 +22,8 @@
 #ifndef PARAMETERS_HH
 #define PARAMETERS_HH
 
-#undef DO_BACKWARD_SEARCH	// normal forward search
-//#define DO_BACKWARD_SEARCH 1	// search from goal toward starting position
-
 // maximum amount of memory to be used
-static const unsigned int MEMORY = 300 * 1024 * 1024;
+static const unsigned int MEMORY = 30 * 1024 * 1024;
 
 #define ALGORITHM_NAME "idastar"
 

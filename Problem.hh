@@ -25,7 +25,6 @@
 class Level;
 class Board;
 
-#include "parameters.hh"
 #include "Atom.hh"
 #include "Pos.hh"
 #include "Size.hh"
@@ -42,20 +41,25 @@ public:
     static void setGoal(const Level& level, int goalPosNr);
 
     static bool isBlock(Pos p) { return myIsBlock[p.fieldNumber()]; }
-#ifdef DO_BACKWARD_SEARCH
-    static const Pos* startPositions() { return myGoalPositions; }
-    static Pos startPosition(int nr) { return myGoalPositions[nr]; }
-    static Pos goalPosition(int nr) { return myStartPositions[nr]; }
-#else
+
     static const Pos* startPositions() { return myStartPositions; }
     static Pos startPosition(int nr) { return myStartPositions[nr]; }
     static Pos goalPosition(int nr) { return myGoalPositions[nr]; }
-#endif
+
+    static const Pos* rstartPositions() { return myGoalPositions; }
+    static Pos rstartPosition(int nr) { return myGoalPositions[nr]; }
+    static Pos rgoalPosition(int nr) { return myStartPositions[nr]; }
+
     static int numIdentical(int nr) { return myNumIdentical[nr]; }
     static int firstIdentical(int nr) { return myFirstIdentical[nr]; }
+
     static int goalDist(int atomNr, Pos pos) {
 	return goalDists[atomNr][pos.fieldNumber()];
     }
+    static int rgoalDist(int atomNr, Pos pos) {
+	return rgoalDists[atomNr][pos.fieldNumber()];
+    }
+
     static Atom atom(int nr) { return atoms[nr]; }
 #ifdef DO_REVERSE_SEARCH
     static const HashTable<RevState>& revStates() { return _revStates; }
@@ -75,6 +79,7 @@ private:
     static int myNumIdentical[NUM_ATOMS];
     static int myFirstIdentical[NUM_ATOMS];
     static int goalDists[NUM_ATOMS][NUM_FIELDS];
+    static int rgoalDists[NUM_ATOMS][NUM_FIELDS];
     static Atom atoms[NUM_ATOMS];
 #ifdef DO_REVERSE_SEARCH
     static HashTable<RevState> _revStates;
