@@ -29,9 +29,13 @@ class Problem;
 
 #include "Move.hh"
 
-#define DO_REVERSE_SEARCH 0
+//#define DO_REVERSE_SEARCH 1
+#undef DO_REVERSE_SEARCH
+
+#ifdef DO_REVERSE_SEARCH
 // max. distance from goal for bidirectional search
 static const int REV_SEARCH_MAX_GOAL_DIST = 6;
+#endif
 
 using namespace std;
 
@@ -59,7 +63,7 @@ public:
     unsigned int numMoves : 7;
     bool isOpen		  : 1;
 }
-#if HAVE_ATTRIBUTE_PACKED
+#ifdef HAVE_ATTRIBUTE_PACKED
     __attribute__ ((packed))
 #endif
     ;
