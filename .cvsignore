@@ -11,4 +11,3 @@ config.status
 configure
 cxx_repository
 gmon.out
-stats
