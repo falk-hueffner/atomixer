@@ -50,7 +50,9 @@ public:
 
     int atomPosition(int atomNr) const { return atomPositions_[atomNr]; }
     const unsigned char* atomPositions() const { return atomPositions_; }
+
     inline int minMovesLeft() const;
+    inline int rminMovesLeft() const;
     
     inline bool operator==(const State& other) const;
 

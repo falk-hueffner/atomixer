@@ -25,6 +25,16 @@
 #include "Problem.hh"
 #include "State.hh"
 
+void State::apply(const Move& move) {
+    int atomNr = move.atomNr();
+    atomPositions_[atomNr] = move.pos2().fieldNumber();
+}
+
+void State::undo(const Move& move) {
+    int atomNr = move.atomNr();
+    atomPositions_[atomNr] = move.pos1().fieldNumber();
+}
+
 State::State(const Pos positions[NUM_ATOMS]) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	atomPositions_[i] = positions[i].fieldNumber();
@@ -40,16 +50,6 @@ State::State(const State& state, const Move& move) {
 	atomPositions_[i] = state.atomPositions_[i];
 
     apply(move);
-}
-
-void State::apply(const Move& move) {
-    int atomNr = move.atomNr();
-    atomPositions_[atomNr] = move.pos2().fieldNumber();
-}
-
-void State::undo(const Move& move) {
-    int atomNr = move.atomNr();
-    atomPositions_[atomNr] = move.pos1().fieldNumber();
 }
 
 int State::minMovesLeft() const {
@@ -88,6 +88,42 @@ int State::minMovesLeft() const {
     return minMovesLeft;
 }
 
+int State::rminMovesLeft() const {
+    int minMovesLeft = 0;
+
+    // 1. Unique atoms
+    for (int i = 0; i < NUM_UNIQUE; ++i)
+	minMovesLeft += Problem::rgoalDist(i, atomPositions_[i]);
+
+    // 2. Atoms with 2 instances
+    for (int i = PAIRED_START; i < PAIRED_END; i += 2) {
+	int moves1 = Problem::rgoalDist(i, atomPositions_[i])
+	    + Problem::rgoalDist(i + 1, atomPositions_[i + 1]);
+	int moves2 = Problem::rgoalDist(i, atomPositions_[i + 1])
+	    + Problem::rgoalDist(i + 1, atomPositions_[i]);
+	minMovesLeft += min(moves1, moves2);
+    }
+
+    //3. Atoms with n, n>2 instances
+    for (int i = MULTI_START; i < NUM_ATOMS; i += Problem::numIdentical(i)) {
+	// More than 16 equal atoms would be too slow anyway.
+	int perm[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+	int minMinMoves = 1000000;
+	do {
+	    int minMoves = 0;
+	    for (int j = 0; j < Problem::numIdentical(i); ++j) {
+		minMoves += Problem::rgoalDist(i + perm[j],
+					       atomPositions_[i + j]);
+	    }
+	    if (minMoves < minMinMoves)
+		minMinMoves = minMoves;
+	} while (next_permutation(perm, perm + Problem::numIdentical(i)));
+	minMovesLeft += minMinMoves;
+    }
+
+    return minMovesLeft;
+}
+
 bool State::operator==(const State& other) const {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	if (atomPositions_[i] != other.atomPositions_[i])
@@ -95,11 +131,7 @@ bool State::operator==(const State& other) const {
     return true;
 }
 
-#ifdef DO_BACKWARD_SEARCH
-vector<Move> State::rmoves() const {
-#else
 vector<Move> State::moves() const {
-#endif
     vector<Move> moves;
     moves.reserve(NUM_ATOMS * 3);
 
@@ -125,11 +157,7 @@ vector<Move> State::moves() const {
     return moves;
 }
 
-#ifdef DO_BACKWARD_SEARCH
-vector<Move> State::moves() const {
-#else
 vector<Move> State::rmoves() const {
-#endif
     vector<Move> moves;
     moves.reserve(NUM_ATOMS * 3);
 

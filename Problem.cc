@@ -25,7 +25,6 @@
 #include <queue>
 #include <set>
 
-#include "parameters.hh"
 #include "Dir.hh"
 #include "Level.hh"
 #include "Problem.hh"
@@ -38,6 +37,7 @@ Pos Problem::myGoalPositions[NUM_ATOMS];
 int Problem::myNumIdentical[NUM_ATOMS];
 int Problem::myFirstIdentical[NUM_ATOMS];
 int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
+int Problem::rgoalDists[NUM_ATOMS][NUM_FIELDS];
 int Problem::goalNr;
 Atom Problem::atoms[NUM_ATOMS];
 #ifdef DO_REVERSE_SEARCH
@@ -150,13 +150,10 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 	cout << endl;
     }
 
-    for (int i = 0; i < NUM_ATOMS; ++i)
-#ifdef DO_BACKWARD_SEARCH
-	calcDists(goalDists[i], myStartPositions[i]);
-#else
+    for (int i = 0; i < NUM_ATOMS; ++i) {
 	calcDists(goalDists[i], myGoalPositions[i]);
-#endif
-
+	calcDists(rgoalDists[i], myStartPositions[i]);
+    }
 #ifdef DO_REVERSE_SEARCH
     calcCloseStates();
 #endif
