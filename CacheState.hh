@@ -73,7 +73,7 @@ public:
     CacheState() { }
     CacheState(const State& state) : State(state) { canonicallify(); }
     CacheState(const Pos positions[NUM_ATOMS]) : State(positions) { canonicallify(); }
-    CacheState(const unsigned char positions[NUM_ATOMS])
+    CacheState(const ShortPos positions[NUM_ATOMS])
 	: State(positions) { canonicallify(); }
     CacheState(const State& state, const Move& move)
 	: State(state, move)  { canonicallify(move.atomNr()); }

@@ -24,6 +24,7 @@
 
 class Move;
 
+#include "Size.hh"
 #include "CacheState.hh"
 
 class AStarState : public CacheState {
@@ -42,10 +43,19 @@ public:
 
 private:
     void calcMinMovesLeft() { minMovesLeft_ = State::minMovesLeft(); }
-    unsigned char minMovesLeft_;
+    //unsigned char minMovesLeft_;
+#ifdef LARGE_BOARD
+    uint16_t minMovesLeft_;
+#else
+    uint8_t minMovesLeft_;
+#endif
 
 public:				// for simplicity
+#ifdef LARGE_BOARD
+    unsigned int numMoves	: 15;
+#else
     unsigned int numMoves	: 7;
+#endif
     bool isOpen			: 1;
 }
 #ifdef HAVE_ATTRIBUTE_PACKED
