@@ -23,6 +23,6 @@
 #define SIZE_HH
 
 // these are hardcoded for speed and simplicity
-const int XSIZE = 16, YSIZE = 15;
+const int XSIZE = 16, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
 
 #endif

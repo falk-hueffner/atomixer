@@ -26,6 +26,8 @@
 
 #include "Size.hh"
 
+using namespace std;
+
 class Pos {
 public:
     Pos() { }		// leave uninitialized
@@ -33,6 +35,7 @@ public:
 
     int x() const { return p % XSIZE; }
     int y() const { return p / XSIZE; }
+    int fieldNumber() const { return p; }
 
 private:
     int p;
