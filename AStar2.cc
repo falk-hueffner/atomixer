@@ -134,8 +134,8 @@ int findBest(int maxMoves) {
 }
 
 deque<Move> aStar2(const State2& start, int maxMoves) {
-    DEBUG1("MAX_STATES = " << MAX_STATES);
-    DEBUG1("MAX_HASHES = " << MAX_HASHES);
+    DEBUG0("MAX_STATES = " << MAX_STATES);
+    DEBUG0("MAX_HASHES = " << MAX_HASHES);
     states.clear();
     states.push_back(State2());	// 0 reserved for 'empty'
     states.reserve(MAX_STATES);
@@ -180,7 +180,6 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	vector<Move> moves = states[bestIndex].moves();
 	for (vector<Move>::const_iterator m = moves.begin();
 	     m != moves.end(); ++m) {
-	    DEBUG0("--mark--");
 	    DEBUG0("moving " << states[bestIndex] << ' ' << *m);
 	    State2 newState2(states[bestIndex], *m);
 	    newState2.predecessor = bestIndex;
