@@ -1,5 +1,9 @@
 #! /bin/sh -f
 
+if [ ! -f Makefile ]; then
+  ./configure
+fi
+
 level=`basename $1`
 echo -n "$level: "
 line=`grep $level stats`
