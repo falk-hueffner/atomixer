@@ -20,22 +20,17 @@
 */
 
 #include <assert.h>
+#include <signal.h>
 #include <stdlib.h>
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#else
-typedef long long int64_t;
-#endif
 
 #include <iostream>
 #include <fstream>
 
-#define USE_IDASTAR
-//#undef USE_IDASTAR
-
 #include "Level.hh"
 #include "Problem.hh"
 #include "State.hh"
+#include "Statistics.hh"
+#include "parameters.hh"
 
 #ifdef USE_IDASTAR
 # include "IDAStar.hh"
@@ -45,7 +40,7 @@ typedef long long int64_t;
 
 using namespace std;
 
-int64_t totalNodesGenerated;
+static string levelName;
 
 string isotime() {
     time_t timet = time(NULL);
@@ -53,6 +48,25 @@ string isotime() {
     strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M",
 	     localtime(&timet));
     return string(timestr);
+}
+
+void writestats() {
+    ofstream statsStream("statistics-"ALGORITHM_NAME, ios::app);
+    statsStream << levelName
+		<< " with " ALGORITHM_NAME << " final statistics:\n";
+    Statistics::print(statsStream);
+    if (Statistics::solutionLength != 0) {
+	statsStream << " Solution length:  " << Statistics::solutionLength << endl;
+    } else {
+	if (Statistics::lowerBound != 0)
+	    statsStream << " Lower bound:      " << Statistics::lowerBound << endl;
+	if (Statistics::upperBound != 0)
+	    statsStream << " Upper bound:      " << Statistics::upperBound << endl;
+    }
+}
+
+void signalhandler(int) {
+    exit(1);
 }
 
 int main(int argc, char* argv[]) {
@@ -73,6 +87,9 @@ int main(int argc, char* argv[]) {
 	return 0;
     }
 
+    atexit(writestats);
+    signal(SIGTERM, signalhandler);
+
     ifstream levelStream(argv[1]);
     assert(levelStream);
     Level level(levelStream);
@@ -81,13 +98,13 @@ int main(int argc, char* argv[]) {
     Problem::setLevel(level);
     cout << "called set level\n";
 
-    string levelName = string(argv[1]);
+    levelName = string(argv[1]);
     while (levelName.find('/') != string::npos)
 	levelName = levelName.substr(levelName.find('/') + 1);
     cout << "Solving " << levelName << "...\n";
 
-    int knownLowerBound = 15;
     //int knownLowerBound = 0;
+    int knownLowerBound = 7;
 
     /*
     ifstream statStream("stats");
@@ -130,13 +147,18 @@ int main(int argc, char* argv[]) {
 		}
 		cout << "Final board:\n"
 		     << Board(state)
-
 		     << "Solution in " << moves.size() << " moves.\n";
 		for (deque<Move>::const_iterator m = moves.begin();
 		     m != moves.end(); ++m) {
 		    cout << *m << endl;
 		}
-		cout << "total nodes generated: " << totalNodesGenerated << endl;
+
+		Statistics::solutionLength = moves.size();
+		
+		cout << levelName << " with " ALGORITHM_NAME << " final statistics:\n";
+		Statistics::print(cout);
+
+
 		ofstream boundStream("bounds", ios::app);
 		boundStream << levelName << ": = " << maxMoves << endl;
 
@@ -152,6 +174,7 @@ int main(int argc, char* argv[]) {
 	    }
 	}
 	// ok, now we know we need at least maxMoves + 1 moves
+	Statistics::lowerBound = maxMoves + 1;
 	if (maxMoves + 1 > knownLowerBound) {
 	    ofstream boundStream("bounds", ios::app);
 	    boundStream << levelName << ": >= " << maxMoves + 1 << endl;

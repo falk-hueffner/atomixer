@@ -19,35 +19,25 @@
   $Id$
 */
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#else
-typedef long long int64_t;
-#endif
-
 #include <deque>
 #include <iostream>
 #include <vector>
 
 #include "Dir.hh"
-#include "IDAStar.hh"
-#include "IDAStarState.hh"
-#include "IDAStarCacheState.hh"
-#include "Problem.hh"
-#include "Timer.hh"
 #include "HashTable.hh"
+#include "IDAStar.hh"
+#include "IDAStarCacheState.hh"
+#include "IDAStarState.hh"
+#include "Problem.hh"
+#include "Statistics.hh"
+#include "Timer.hh"
+#include "parameters.hh"
 
 #define DEBUG0(x) do { } while (0)
 #define DEBUG1(x) cout << x << endl
 
 using namespace std;
 
-extern int64_t totalNodesGenerated;
-
-int64_t numExpanded = 0, numChildren = 0, numPruned = 0;
-
-// maximum amount of memory to be used
-static const unsigned int MEMORY = 300 * 1024 * 1024;
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
@@ -58,7 +48,6 @@ static int maxMoves;
 static int moves;
 static IDAStarState state;
 static deque<Move> solution;
-static int64_t nodesGenerated, lastOutput;
 static Timer timer;
 static int cacheGoalNr = -1;
 //static HashTable<IDAStarCacheState> cachedStates(MAX_STATES, LOAD_FACTOR);
@@ -68,8 +57,7 @@ static bool dfs(Move lastMove);
 deque<Move> IDAStar(int maxDist) {
     DEBUG0("IDAStar" << maxDist);
     moves = 0;
-    nodesGenerated = 1;
-    lastOutput = 0;
+    ++Statistics::statesGenerated;
     state = IDAStarState(Problem::startPositions());
     solution.clear();
     if (state.minMovesLeft() > maxDist)
@@ -95,9 +83,9 @@ deque<Move> IDAStar(int maxDist) {
     }
     maxMoves = maxDist;
 
-    timer.reset();
+    Statistics::timer.start();
     dfs(Move());
-    totalNodesGenerated += nodesGenerated;
+    Statistics::timer.stop();
 
     return solution;
 }
@@ -146,28 +134,21 @@ static bool dfs(Move lastMove) {
 	    return false;
     }
 
-    if (nodesGenerated - lastOutput > 2000000) {
-	lastOutput = nodesGenerated;
+    if (cachedStates.size() < cachedStates.capacity())
+	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
+					      moves, state.minMovesLeft()));
+
+    if ((Statistics::statesGenerated & 0xffffff) == 0) {
 	cout << state << " / " << maxMoves << endl
-	     << " Nodes: " << nodesGenerated
 	     << " cached: " << cachedStates.size()
 	     << " / " << cachedStates.capacity()
 	     << " moves = " << moves
-	     << " nodes/second: "
-	     << (int64_t) (double(nodesGenerated) / timer.seconds())
-	     << "\nAverage branching factor after "
-	     << numExpanded
-	     << " expansions: "
-	     << double(numChildren) / double(numExpanded)
-	     << "\nAverage prunded children: "
-	     << double(numPruned) / double(numExpanded)
-	     << "\nAverage effective branching factor: "
-	     << double(numChildren - numPruned) / double(numExpanded)
 	     << endl;
+	Statistics::print(cout);
     }
 
     // generate all moves...
-    ++numExpanded;
+    ++Statistics::statesExpanded;
     for (int atomNr = 0; atomNr < NUM_ATOMS; ++atomNr) {
 	Pos startPos = state.atomPosition(atomNr);
 	for (int dirNo = 0; dirNo < 4; ++dirNo) {
@@ -178,12 +159,12 @@ static bool dfs(Move lastMove) {
 	    for (pos = startPos + dir; !state.isBlocking(pos); pos += dir) { }
 	    Pos newPos = pos - dir;
 	    if (newPos != startPos) {
-		++numChildren;
+		++Statistics::numChildren;
 		DEBUG0(spaces(moves) << "moves to " << newPos);
 		Move move(atomNr, startPos, newPos, dir);
 		if (moves > 0) {
 		    if (atomNr == lastMove.atomNr() && dir == -lastMove.dir()) {
-			++numPruned;
+			++Statistics::numPruned;
 			continue;
 		    }
 		    if (atomNr < lastMove.atomNr()) {
@@ -193,14 +174,14 @@ static bool dfs(Move lastMove) {
 			      || newPos + dir == lastMove.pos2()
 			      || between(startPos, newPos, dir, lastMove.pos1())
 			      || startPos == lastMove.pos2() + lastMove.dir())) {
-			    ++numPruned;
+			    ++Statistics::numPruned;
 			    continue;
 			}
 		    }
 		}
 		state.apply(move);
 		++moves;
-		++nodesGenerated;
+		++Statistics::statesGenerated;
 		if (dfs(move)) {
 		    solution.push_front(Move(atomNr, startPos, newPos, dir));
 		    return true;

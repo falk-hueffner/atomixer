@@ -20,28 +20,23 @@
 */
 
 #include <stdlib.h>
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#else
-typedef long long int64_t;
-#endif
 
 #include <algorithm>
 #include <deque>
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include "AStar2.hh"
 #include "AStarState.hh"
 #include "State.hh"
-#include "Timer.hh"
+#include "Statistics.hh"
+#include "parameters.hh"
 
 #define DEBUG0(x) do { } while (0)
 #define DEBUG1(x) cout << x << endl
 
 using namespace std;
-
-extern int64_t totalNodesGenerated;
 
 static const double LOAD_FACTOR = 1.4;
 
@@ -59,8 +54,6 @@ static int minMinTotalMoves;
 static int firstOpen;
 static int searchIndex;
 static int numOpen;
-static int64_t nodesGenerated;
-static Timer timer;
 
 #ifdef DO_MREC
 static int mrecMoves;
@@ -157,8 +150,6 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
     cout << "sizeof(AStarState) = " << sizeof(AStarState) << endl;
     AStarState start = startState;
     maxMoves = nmaxMoves;
-    int64_t numExpanded = 0, numChildren = 0;
-    nodesGenerated = 0;
     if (start.minTotalMoves() > maxMoves)
 	return deque<Move>();	// saves the allocations which can take quite some time
 
@@ -177,9 +168,9 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
     
     DEBUG1("start state: " << start);
     hashInsert(start);
-    ++totalNodesGenerated;
+    ++Statistics::statesGenerated;
 
-    timer.reset();
+    Statistics::timer.start();
     while (true) {
 	int bestIndex = findBest(maxMoves);
 	DEBUG0("bestIndex: " << bestIndex);
@@ -190,16 +181,14 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 	--numOpen;
 
 	vector<Move> moves = states[bestIndex].moves();
-	++numExpanded;
-	numChildren += moves.size();
+	++Statistics::statesExpanded;
+	Statistics::numChildren += moves.size();
 	for (vector<Move>::const_iterator m = moves.begin();
 	     m != moves.end(); ++m) {
-	    ++totalNodesGenerated;
-	    if ((++nodesGenerated & 0xfffff) == 0) // % is extremely slow on int64_t
-		cout << "best: " << states[bestIndex] << endl
-		     << " Nodes: " << nodesGenerated
-		     << " nodes/second: "
-		     << (int64_t) (double(nodesGenerated) / timer.seconds())
+	    ++Statistics::statesGenerated;
+	    // % is extremely slow on int64_t...
+	    if ((Statistics::statesGenerated & 0xffffff) == 0) {
+		cout << "\nbest: " << states[bestIndex]
 		     << "\n  open: " << numOpen
 		     << "\nstates: " << states.size()
 		     << " \t(" << (states.size() * sizeof(AStarState)) / 1000000
@@ -207,11 +196,9 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 		     << "M)\nhashes: " << hashTable.size()
 		     << " \t(" << (states.size() * sizeof(int)) / 1000000
 		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
-		     << "M)\nAverage branching factor after "
-		     << numExpanded
-		     << " expansions: "
-		     << double(numChildren) / double(numExpanded)
-		     << endl;
+		     << ")\n";
+		Statistics::print(cout);
+	    }
 	    DEBUG0("moving " << states[bestIndex] << ' ' << *m);
 	    AStarState newState(states[bestIndex], *m);
 	    newState.predecessor = bestIndex;
@@ -219,6 +206,7 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 
 	    int minMovesLeft = newState.minMovesLeft();
 	    if (minMovesLeft == 0) { // special property of our heuristic...
+		Statistics::timer.stop();
 		cout << "Found solution.\n"
 		     << "\nstates: " << states.size()
 		     << " \t(" << (states.size() * sizeof(AStarState)) / 1000000
@@ -227,6 +215,7 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 		     << " \t(" << (states.size() * sizeof(int)) / 1000000
 		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
 		     << "M)\n";
+		Statistics::print(cout);
 		AStarState* pNode = &states[bestIndex];
 		AStarState* pNextNode;
 
@@ -324,12 +313,12 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 
     DEBUG1("Queue empty; no solution possible.");
 
+    Statistics::timer.stop();
     return deque<Move>();
 }
 
 #ifdef DO_MREC
 static bool idastar() {
-    //static int64_t lastOutput;
 
     DEBUG0(spaces(mrecMoves) << "dfs: moves =  " << mrecMoves
 	   << " state = " << mrecState);

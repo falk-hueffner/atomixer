@@ -31,4 +31,8 @@ atomixer_SOURCES = \
 	Size.hh		\
 	State.cc	\
 	State.hh	\
+	Statistics.cc	\
+	Statistics.hh	\
+	Timer.cc	\
+	Timer.hh	\
 	main.cc
