@@ -33,8 +33,8 @@ using namespace std;
 
 class State {
 public:
-    //State() { }			// leave uninitialized
-    State(const Problem& problem);
+    State() { }			// leave uninitialized
+    explicit State(vector<Pos> atomPositions);
     State(const State& state, const Move& move);
 
     bool operator<(const State& other) const; // to put into STL set
@@ -47,7 +47,6 @@ public:
 
 private:
     vector<Pos> myAtomPositions;
-    const Problem& myProblem;
 };
 
 ostream& operator <<(ostream& out, const State& state);

@@ -24,7 +24,11 @@
 #include "Level.hh"
 #include "Problem.hh"
 
-Problem::Problem(const Level& level, int goalPosNr) {
+bool Problem::myIsBlock[NUM_FIELDS];
+vector<Pos> Problem::myStartPositions;
+vector<Pos> Problem::myGoalPositions;
+
+void Problem::setProblem(const Level& level, int goalPosNr) {
     Pos d = level.goalPos(goalPosNr);
     int dx = d.x(), dy = d.y();
     for (int x = 0; x < XSIZE; ++x) {
