@@ -1,5 +1,5 @@
 /*
-  atomixer -- Atoimx puzzle solver
+  atomixer -- Atomix puzzle solver
   Copyright (C) 2000 Falk Hueffner
 
   This program is free software; you can redistribute it and/or modify it
