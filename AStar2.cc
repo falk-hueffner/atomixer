@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "State2.hh"
+#include "Timer.hh"
 
 #define DEBUG0(x) do { } while (0)
 #define DEBUG1(x) cout << x << endl
@@ -45,10 +46,12 @@ static const unsigned int MAX_HASHES = (unsigned int)
 vector<State2> states;
 vector<int> hashTable;
 
-int minMinTotalMoves;
-int firstOpen;
-int searchIndex;
-int numOpen;
+static int minMinTotalMoves;
+static int firstOpen;
+static int searchIndex;
+static int numOpen;
+static long long nodesGenerated;
+static Timer timer;
 
 void hashInsert(const State2& state) {
     DEBUG0("inserting " << state);
@@ -136,6 +139,8 @@ int findBest(int maxMoves) {
 }
 
 deque<Move> aStar2(const State2& start, int maxMoves) {
+    timer.reset();
+    nodesGenerated = 0;
     if (start.minTotalMoves() > maxMoves)
 	return deque<Move>();	// saves the allocations which can take quite some time
 
@@ -153,7 +158,6 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
     numOpen = 0;
     
     static long long totalNodes = 0;
-    long counter = 0;
     
     DEBUG1("start state: " << start);
     hashInsert(start);
@@ -167,17 +171,6 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	DEBUG0("best: " << states[bestIndex]);
 	states[bestIndex].isOpen = false;
 	--numOpen;
-
-	if (counter++ % 100000 == 0)
-	    cout << "best: " << states[bestIndex]
-		 << "\n  open: " << numOpen
-		 << "\nstates: " << states.size()
-		 << " \t(" << (states.size() * sizeof(State2)) / 1000000
-		 << "M/" << (states.capacity() * sizeof(State2)) / 1000000
-		 << "M)\nhashes: " << hashTable.size()
-		 << " \t(" << (states.size() * sizeof(int)) / 1000000
-		 << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
-		 << "M)\n";
 
 	vector<Move> moves = states[bestIndex].moves();
 	for (vector<Move>::const_iterator m = moves.begin();
@@ -244,6 +237,19 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	    hashInsert(newState2);
 	    DEBUG0("inserted" << newState2);
 	    ++totalNodes;
+	    if ((++nodesGenerated & 0x3fffff) == 0)
+		cout << "best: " << states[bestIndex] << endl
+		     << " Nodes: " << nodesGenerated
+		     << " nodes/second: "
+		     << (long long) (double(nodesGenerated) / timer.seconds())
+		     << "\n  open: " << numOpen
+		     << "\nstates: " << states.size()
+		     << " \t(" << (states.size() * sizeof(State2)) / 1000000
+		     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
+		     << "M)\nhashes: " << hashTable.size()
+		     << " \t(" << (states.size() * sizeof(int)) / 1000000
+		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
+		     << "M)\n";
 	}
     }
 
