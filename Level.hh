@@ -39,6 +39,7 @@ public:
 
     void printStats() const;
     Pos goalPos(int goalPosNr) const { return myGoalPositions[goalPosNr]; }
+    int numGoals() const { return myGoalPositions.size(); }
 
 private:
     void findGoalPositions();
