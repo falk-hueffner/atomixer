@@ -91,6 +91,11 @@ int main(int argc, char* argv[]) {
 	    assert(levelStream);
 	    Level level(levelStream);
 	    level.printStats();
+	} else if (string(argv[1]) == "--show") {
+	    ifstream levelStream(argv[2]);
+	    assert(levelStream);
+	    Level level(levelStream);
+	    cout << level.startBoard() << "Goal:\n" << level.goal();
 	} else {
 	    usage();
 	    return 1;
@@ -106,36 +111,14 @@ int main(int argc, char* argv[]) {
     assert(levelStream);
     Level level(levelStream);
     cout << level.startBoard();
-    cout << "calling set level\n";
     Problem::setLevel(level);
-    cout << "called set level\n";
 
     levelName = string(argv[1]);
     while (levelName.find('/') != string::npos)
 	levelName = levelName.substr(levelName.find('/') + 1);
     cout << "Solving " << levelName << "...\n";
 
-    //int knownLowerBound = 0;
     int knownLowerBound = 0;
-
-    /*
-    ifstream statStream("stats");
-    assert(statStream);
-    string line;
-    while (getline(statStream, line)) {
-	if (line.find(levelName) == 0) {
-	    cout << line << endl;
-	    for (int i = 0; i < 8; ++i)
-		line = line.substr(line.find('|') + 1);
-	    cout << line << endl;
-	    line = line.substr(0, line.find('|'));
-	    cout << line << endl;
-	    knownLowerBound = atoi(line.c_str());
-	    if (knownLowerBound != 0)
-		cout << "Known lower bound: " << knownLowerBound << endl;
-	}
-    }
-    */
 
     for (int maxMoves = knownLowerBound; ; ++maxMoves) {
 	cout << "******************** " << maxMoves << " ********************\n";
