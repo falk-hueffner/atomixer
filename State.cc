@@ -40,7 +40,7 @@ State::State(const Pos positions[NUM_ATOMS]) {
 	atomPositions_[i] = positions[i].fieldNumber();
 }
 
-State::State(const unsigned char positions[NUM_ATOMS]) {
+State::State(const ShortPos positions[NUM_ATOMS]) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	atomPositions_[i] = positions[i];
 }

@@ -36,6 +36,12 @@ typedef unsigned long long uint64_t;
 
 // A complete representation of a game state.
 
+#ifdef LARGE_BOARD
+typedef uint16_t ShortPos;
+#else
+typedef uint8_t ShortPos;
+#endif
+
 class State {
     friend std::ostream& operator<<(std::ostream& out, const State& state);
 public:
@@ -44,12 +50,12 @@ public:
     // mostly for constructing starting state from the static data in Problem
     inline State(const Pos positions[NUM_ATOMS]);
     // useful for constructing from another State descendant
-    inline State(const unsigned char positions[NUM_ATOMS]);
+    inline State(const ShortPos positions[NUM_ATOMS]);
     // apply move
     inline State(const State& state, const Move& move);
 
     int atomPosition(int atomNr) const { return atomPositions_[atomNr]; }
-    const unsigned char* atomPositions() const { return atomPositions_; }
+    const ShortPos* atomPositions() const { return atomPositions_; }
 
     inline int minMovesLeft() const;
     inline int rminMovesLeft() const;
@@ -68,7 +74,7 @@ public:
     inline uint64_t hash64_2() const;
 
 protected:
-    unsigned char atomPositions_[NUM_ATOMS];
+    ShortPos atomPositions_[NUM_ATOMS];
 }
 #ifdef HAVE_ATTRIBUTE_PACKED
     __attribute__ ((packed))
