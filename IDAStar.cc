@@ -129,6 +129,15 @@ deque<Move> IDAStar(int maxDist) {
     compactionTableCapacity = MEMORY;
     compactionTableEntries = 0;
     compactionTable = new uint8_t[compactionTableCapacity];
+    size_t* compactionTable2 = static_cast<size_t*>(compactionTable);
+    for (size_t i = 0; i < compactionTableCapacity; i += sizeof(size_t))
+	// This is supposed to avoid triggering copy-on-write for OS that
+	// return the zero page on allocation of huge memory areas. Wastes a
+	// lot of time, unfortunately. If you know your OS zeroes memory (like
+	// Linux does, but not Solaris), consider commenting out this loop.
+        if (compactionTable[i] != 0)
+            compactionTable[i] = 0;
+
 #endif
 
     maxMoves = maxDist;
