@@ -26,7 +26,7 @@
 
 #include "State2.hh"
 
-#define DEBUG0(x)
+#define DEBUG0(x) do { } while (0)
 #define DEBUG1(x) cout << x << endl;
 
 using namespace std;
