@@ -85,6 +85,7 @@ static bool doAddBits = true;
 // global variables to describe current search state
 static int maxMoves;
 static IDAStarState state;
+bool mayMove[NUM_ATOMS][4];
 static deque<Move> solution;
 static Timer timer;
 
@@ -129,6 +130,10 @@ deque<Move> IDAStar(int maxDist) {
 #endif
 
     maxMoves = maxDist;
+
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	for (int j = 0; j < 4; ++j)
+	    mayMove[i][j] = true;
 
     Statistics::timer.start();
     dfs(Move());
@@ -205,15 +210,20 @@ static bool dfs(const Move& lastMove) {
 
     static const int MAX_BUCKET_SIZE = NUM_ATOMS * 4;
     //typedef pair<State, Move> Bucket;
-    Move bucket0[MAX_BUCKET_SIZE];
-    Move bucket1[MAX_BUCKET_SIZE];
-    Move bucket2[MAX_BUCKET_SIZE];
-    int bucket0size = 0, bucket1size = 0, bucket2size = 0;
+    //Move bucket0[MAX_BUCKET_SIZE];
+    //Move bucket1[MAX_BUCKET_SIZE];
+    //Move bucket2[MAX_BUCKET_SIZE];
+    Move buckets[3][MAX_BUCKET_SIZE];
+    int bucketsize[3] = { };
 
     for (int atomNr = 0; atomNr < NUM_ATOMS; ++atomNr) {
 	Pos startPos = state.atomPosition(atomNr);
 	for (int dirNo = 0; dirNo < 4; ++dirNo) {
 	    Dir dir = DIRS[dirNo];
+
+	    if (!mayMove[atomNr][dirNo])
+		continue;
+	    
 	    DEBUG0(spaces(moves) << "moving " << atomNr << " @ " << startPos
 		   << ' ' << dir);
 	    Pos pos;
@@ -245,6 +255,7 @@ static bool dfs(const Move& lastMove) {
 	    }
 #endif
 	    int oldMinMovesLeft = state.minMovesLeft();
+	    int bucketNr;
 	    state.apply(move);
 	    ++Statistics::statesGenerated;
 	    ++Statistics::statesGeneratedAtDepth[maxMoves];
@@ -276,57 +287,31 @@ static bool dfs(const Move& lastMove) {
 		}
 	    }
 #endif
-
-	    switch (state.minMovesLeft() - oldMinMovesLeft) {
-		case -1:
-		    bucket0[bucket0size++] = move;
-		    break;
-		case 0:
-		    bucket1[bucket1size++] = move;
-		    break;
-		case 1:
-		    bucket2[bucket2size++] = move;
-		    break;
-		default:
+	    bucketNr = state.minMovesLeft() - oldMinMovesLeft + 1;
+	    if (bucketNr < 0 || bucketNr > 2) {
 		    cerr << "Impossible: old minMovesLeft = " << oldMinMovesLeft
 			 << ", new minMovesLeft = " << state.minMovesLeft() << endl;
-		    abort();
+		    abort();		
 	    }
+	    
+	    buckets[bucketNr][bucketsize[bucketNr]++] = move;
 
 	skip:
 	    state.undo(move, oldMinMovesLeft);
 	}
     }
 
-    for (int i = 0; i < bucket0size; ++i) {
-	int oldMinMovesLeft = state.minMovesLeft();
-	const Move& move = bucket0[i];
-	state.apply(move, oldMinMovesLeft - 1);	
-	if (dfs(move)) {
-	    solution.push_front(move);
-	    return true;
+    for (int bucketNr = 0; bucketNr < 3; ++bucketNr) {
+	for (int i = 0; i < bucketsize[bucketNr]; ++i) {
+	    int oldMinMovesLeft = state.minMovesLeft();
+	    const Move& move = buckets[bucketNr][i];
+	    state.apply(move, oldMinMovesLeft + bucketNr - 1);	
+	    if (dfs(move)) {
+		solution.push_front(move);
+		return true;
+	    }
+	    state.undo(move, oldMinMovesLeft);
 	}
-	state.undo(move, oldMinMovesLeft);
-    }
-    for (int i = 0; i < bucket1size; ++i) {
-	int oldMinMovesLeft = state.minMovesLeft();
-	const Move& move = bucket1[i];
-	state.apply(move, oldMinMovesLeft);	
-	if (dfs(move)) {
-	    solution.push_front(move);
-	    return true;
-	}
-	state.undo(move, oldMinMovesLeft);
-    }
-    for (int i = 0; i < bucket2size; ++i) {
-	int oldMinMovesLeft = state.minMovesLeft();
-	const Move& move = bucket2[i];
-	state.apply(move, oldMinMovesLeft + 1);
-	if (dfs(move)) {
-	    solution.push_front(move);
-	    return true;
-	}
-	state.undo(move, oldMinMovesLeft);
     }
 
 #ifdef DO_CACHING
