@@ -23,6 +23,8 @@
 
 #include "Pos.hh"
 
+using namespace std;
+
 ostream& operator<<(ostream& out, const Pos& pos) {
     return out << '(' << pos.x() << ", " << pos.y() << ')';
 }
