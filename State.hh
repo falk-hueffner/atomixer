@@ -44,7 +44,6 @@ public:
 
     const unsigned char* atomPositions() const { return myAtomPositions; }
 
-
     vector<Move> moves() const;
     int minMovesLeft() const;
 
