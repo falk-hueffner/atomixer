@@ -52,6 +52,11 @@ const char Atom::bindings[][4] = {{' ', '|',  '"', '3'},
 
 */
 
+Atom::Atom() : myID(0) {
+    for (int i = 0; i < NUM_DIRS; ++i)
+	myNumConnections[i] = 0;
+}
+
 Atom::Atom(const string& s) {
     for (int i = 0; i < NUM_DIRS; ++i)
 	myNumConnections[i] = 0;
@@ -72,6 +77,16 @@ Atom::Atom(const string& s) {
     }
 }
 
+bool Atom::operator<(const Atom& other) const {
+    if (myID != other.myID)
+	return myID < other.myID;
+    for (int i = 0; i < NUM_DIRS; ++i)
+	if (myNumConnections[i] != other.myNumConnections[i])
+	    return myNumConnections[i] < other.myNumConnections[i];
+
+    return false;
+}
+
 vector<string> Atom::toAscii() const {
     if (isBlock())
 	return vector<string>(3, "###");
@@ -88,3 +103,4 @@ vector<string> Atom::toAscii() const {
 
     return ascii;
 }
+
