@@ -3,18 +3,17 @@
 prog=$1
 limit=$2
 
-pc() {
-  echo $2 | awk "{print \$$1}"
-}
-
-while sleep 60; do
+while true; do
   runtime=`ps -C $prog -otime --no-headers 2>/dev/null`
   if [ $runtime ]; then
-    runtime=${runtime/:/ }
-    runtime=${runtime/:/ }
-    minutes=$((`pc 1 "$runtime"` * 60 + `pc 2 "$runtime"`))
+    minutes=$(echo "$runtime" | awk -F ':' '{ print $1 * 60 + $2 }')
+    echo $prog running for $minutes/$limit minutes
     if [ $minutes -ge $limit ]; then
+      echo killing $prog
       killall $prog
     fi
+  else
+    echo $prog not running
   fi
+  sleep 60
 done
