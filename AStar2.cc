@@ -19,6 +19,8 @@
   $Id$
 */
 
+#include <stdlib.h>
+
 #include <algorithm>
 #include <deque>
 #include <iostream>
@@ -27,14 +29,14 @@
 #include "State2.hh"
 
 #define DEBUG0(x) do { } while (0)
-#define DEBUG1(x) cout << x << endl;
+#define DEBUG1(x) cout << x << endl
 
 using namespace std;
 
 static const double LOAD_FACTOR = 1.4;
 
-// static const unsigned int MEMORY = 900000000;
-static const unsigned int MEMORY = 350000000;
+static const unsigned int MEMORY = 320 * 1024 * 1024;
+
 static const unsigned int MAX_STATES = (unsigned int)
     (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(State2)));
 static const unsigned int MAX_HASHES = (unsigned int)
@@ -236,7 +238,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 
 	    if (states.size() == MAX_STATES) {
 		DEBUG1("State table full; giving up.");
-		return deque<Move>();
+		exit(1);
 	    }
 
 	    hashInsert(newState2);
