@@ -148,7 +148,7 @@ static bool dfs(IDAStarMove lastMove) {
 		if (moves > 0) {
 		    if (atomNo == lastMove.atomNo && dir == -lastMove.dir)
 			continue;
-		    } else if (atomNo < lastMove.atomNo) {
+		    if (atomNo < lastMove.atomNo) {
 			// this is only allowed if the two moves are not independent.
 			if (!(between(lastMove.p1, lastMove.p2, lastMove.dir, newPos)
 			      || newPos + dir == lastMove.p2
