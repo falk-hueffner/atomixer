@@ -24,6 +24,11 @@
 
 // these are hardcoded for speed and simplicity
 const int XSIZE = 16, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
-const int NUM_ATOMS = 5;
+
+const int NUM_UNIQUE = 3;
+const int NUM_PAIRED = 6;	// note *paired* not *pairs*
+const int NUM_ATOMS = NUM_UNIQUE + NUM_PAIRED;
+
+const int PAIRED_START = NUM_UNIQUE;
 
 #endif

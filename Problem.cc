@@ -35,29 +35,71 @@ Pos Problem::myGoalPositions[NUM_ATOMS];
 int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
 
 void Problem::setLevel(const Level& level) {
-    int numAtoms = 0;
-    for (int y = 0; y < YSIZE; ++y) {
-	for (int x = 0; x < XSIZE; ++x) {
-	    const Atom& atom = level.startBoard().field(x, y);
-	    if (atom.isAtom())
-		myStartPositions[numAtoms++] = Pos(x, y);
-	    assert(numAtoms <= NUM_ATOMS);
-	    myIsBlock[Pos(x, y).fieldNumber()] = atom.isBlock();
+    typedef multimap<Atom, Pos> AtomMap;
+    AtomMap startAtoms;
+
+    for (Pos pos = 0; pos != Pos::end(); ++pos) {
+	const Atom& atom = level.startBoard().field(pos);
+	if (atom.isAtom())
+	    startAtoms.insert(make_pair(atom, pos));
+
+	myIsBlock[pos.fieldNumber()] = atom.isBlock();
+    }
+
+    assert(startAtoms.size() == NUM_ATOMS);
+
+    int numUnique = 0, numPaired = 0;
+    for (AtomMap::const_iterator pf = startAtoms.begin();
+	 pf != startAtoms.end(); ++pf) {
+	const Atom& atom = pf->first;
+	Pos pos = pf->second;
+	switch (startAtoms.count(atom)) {
+	case 1:
+	    myStartPositions[numUnique] = pos;
+
+	    ++numUnique;
+	    break;
+	case 2: {
+	    ++pf;
+	    assert(pf->first == atom);
+	    Pos pos2 = pf->second;
+	    myStartPositions[PAIRED_START + numPaired] = pos;
+	    myStartPositions[PAIRED_START + numPaired + 1] = pos2;
+
+	    numPaired += 2;
+	    break;
+	}
+	default:
+	    assert(!"Too many equal atoms");
 	}
     }
-    assert(numAtoms == NUM_ATOMS);
+    assert (numUnique == NUM_UNIQUE);
+    assert (numPaired == NUM_PAIRED);
 }
 
 void Problem::setGoal(const Level& level, int goalPosNr) {
-    int atomNo = 0;
     Pos d = level.goalPos(goalPosNr);
     int dx = d.x(), dy = d.y();
-    for (int i = 0; i < NUM_ATOMS; ++i) {
-	const Atom& atom = level.startBoard().field(myStartPositions[i].fieldNumber());
-	Pos goalPos = level.goal().find(atom);
-	Pos realGoalPos = Pos(goalPos.x() + dx, goalPos.y() + dy);
-	assert(realGoalPos.ok());
-	myGoalPositions[atomNo++] = realGoalPos;
+    typedef multimap<Atom, Pos> AtomMap;
+    AtomMap goalAtoms;
+
+    for (Pos pos = 0; pos != Pos::end(); ++pos) {
+	const Atom& atom = level.goal().field(pos);
+	if (atom.isAtom()) {
+	    Pos goalPos(pos.x() + dx, pos.y() + dy);
+	    goalAtoms.insert(make_pair(atom, goalPos));
+	}
+    }
+    for (int i = 0; i < NUM_UNIQUE; ++i) {
+	const Atom& atom = level.startBoard().field(myStartPositions[i]);
+	myGoalPositions[i] = goalAtoms.find(atom)->second;
+    }
+    for (int i = PAIRED_START; i < NUM_ATOMS; i += 2) {
+	const Atom& atom = level.startBoard().field(myStartPositions[i]);
+	AtomMap::const_iterator p = goalAtoms.find(atom);
+	myGoalPositions[i] = p->second;
+	++p;
+	myGoalPositions[i + 1] = p->second;
     }
 
     for (int i = 0; i < NUM_ATOMS; ++i)
