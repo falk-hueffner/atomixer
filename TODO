@@ -2,13 +2,12 @@ Algorithms:
 * MREC
 * BDDs?
 * Partial IDA*?
-* overestimating A* for upper bounds
+* overestimating A* for upper bounds (WIDA* [Kor93])
+* Bidirectional search
 
 Heuristic:
-* linear conflicts?
-* stoppers?
+* identical atoms: minimum cost matching?
 
 Code:
 * make Pos() explicit?
-* more than 2 identical atoms
-* hash table
+* more than 2 identical atoms: canonicallify position
