@@ -13,12 +13,15 @@ atomixer_SOURCES = \
 	Board.hh	\
 	Dir.cc		\
 	Dir.hh		\
+	HashTable.hh	\
 	IDAStar.cc	\
 	IDAStar.hh	\
 	Level.cc	\
 	Level.hh	\
 	Move.cc		\
 	Move.hh		\
+	PackedState.cc	\
+	PackedState.hh	\
 	Pos.cc		\
 	Pos.hh		\
 	Problem.cc	\

@@ -19,34 +19,28 @@
   $Id$
 */
 
-#include <iostream>
-#include <algorithm>
-
-#include "Dir.hh"
+#include "PackedState.hh"
 #include "Problem.hh"
-#include "State2.hh"
-#include "RevState.hh"
 
 using namespace std;
 
-State2::State2(const Pos natomPositions[NUM_ATOMS]) {
-    numMoves = 0;
-    isOpen = true;
+PackedState::PackedState(const Pos natomPositions[NUM_ATOMS]) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	atomPositions[i] = natomPositions[i].fieldNumber();
-    calcMinMovesLeft();
 }
 
-State2::State2(const State2& state, const Move& move) {
-    numMoves = state.numMoves + 1;
-    isOpen = true;
+PackedState::PackedState(const unsigned char natomPositions[NUM_ATOMS]) {
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	atomPositions[i] = natomPositions[i];
+}
+
+PackedState::PackedState(const PackedState& state, const Move& move) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	atomPositions[i] = state.atomPositions[i];
     atomPositions[move.atomNr()] = move.pos2().fieldNumber();
-    calcMinMovesLeft();
 }
 
-vector<Move> State2::moves() const {
+vector<Move> PackedState::moves() const {
     vector<Move> moves;
     moves.reserve(NUM_ATOMS * 3);
 
@@ -71,7 +65,7 @@ vector<Move> State2::moves() const {
     return moves;
 }
 
-vector<Move> State2::rmoves() const {
+vector<Move> PackedState::rmoves() const {
     vector<Move> moves;
     moves.reserve(NUM_ATOMS * 3);
 
@@ -96,65 +90,45 @@ vector<Move> State2::rmoves() const {
     return moves;
 }
 
-void State2::calcMinMovesLeft() {
-    const int MAX_DIST = 6;
-    _minMovesLeft = 0;
+int PackedState::minMovesLeft() const {
+    int minMovesLeft = 0;
     for (int i = 0; i < NUM_UNIQUE; ++i)
-	_minMovesLeft += Problem::goalDist(i, atomPositions[i]);
+	minMovesLeft += Problem::goalDist(i, atomPositions[i]);
     for (int i = PAIRED_START; i < NUM_ATOMS; i += 2) {
 	int moves1 = Problem::goalDist(i, atomPositions[i])
 	    + Problem::goalDist(i + 1, atomPositions[i + 1]);
 	int moves2 = Problem::goalDist(i, atomPositions[i + 1])
 	    + Problem::goalDist(i + 1, atomPositions[i]);
-	_minMovesLeft += min(moves1, moves2);
+	minMovesLeft += min(moves1, moves2);
     }
-    if (_minMovesLeft <= MAX_DIST) {	// FIXMEFIXMEFIXME
-	RevState revState(atomPositions); // FIXME silly
-	HashTable<RevState>::ConstIterator i
-	    = Problem::revStates().find(revState);
-	if (i != Problem::revStates().end()) {
-	    if (_minMovesLeft != i->goalDist()) {
-		//cerr << *this << ": estimated: " << int(_minMovesLeft) << " actual: " << i->goalDist() << endl;
-		_minMovesLeft = i->goalDist();
-	    }
-	} else {
-	    //cerr << *this << ": estimated: " << int(_minMovesLeft) << " but not in Problem::revStates()!!\n";
-	    _minMovesLeft = MAX_DIST + 1;
-	}
-    }
+
+    return minMovesLeft;
 }
 
-bool State2::operator<(const State2& other) const {
+bool PackedState::operator<(const PackedState& other) const {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	if (atomPositions[i] != other.atomPositions[i])
 	    return atomPositions[i] < other.atomPositions[i];
     return false;
 }
     
-bool State2::operator==(const State2& other) const {
+bool PackedState::operator==(const PackedState& other) const {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	if (atomPositions[i] != other.atomPositions[i])
 	    return false;
     return true;
 }
 
-ostream& operator<<(ostream& out, const State2& state) {
+ostream& operator<<(ostream& out, const PackedState& state) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	out << Pos(state.atomPositions[i]) << ' ';
-    out << '(' << state.numMoves
-	<< '/' << state.numMoves + state.minMovesLeft() << ')';
-    if (state.isOpen)
-	out << " *";
 
     return out;
 }
 
-static const int NUM_WORDS = (NUM_ATOMS / sizeof(size_t));// * sizeof(size_t);
-static const size_t REST_MASK
-	= (((size_t) 1) << ((NUM_ATOMS - (NUM_WORDS * sizeof(size_t))) * 8)) - 1;
-
-size_t State2::hash() const {
-    size_t result = 0;
+// Seems to work ok, but needs more testing.
+unsigned int PackedState::hash() const {
+    unsigned int result = 0;
 
     for (int i = 0; i < NUM_ATOMS; ++i)
 	result = 97 * result + atomPositions[i];

@@ -28,6 +28,8 @@ class Board;
 #include "Atom.hh"
 #include "Pos.hh"
 #include "Size.hh"
+#include "RevState.hh"
+#include "HashTable.hh"
 
 using namespace std;
 
@@ -44,15 +46,18 @@ public:
 	return goalDists[atomNr][pos.fieldNumber()];
     }
     static Atom atom(int nr) { return atoms[nr]; }
+    static const HashTable<RevState>& revStates() { return _revStates; }
 
 private:
     static void calcDists(int dists[NUM_FIELDS], Pos goal);
+    static void calcCloseStates();
 
     static bool myIsBlock[NUM_FIELDS];
     static Pos myStartPositions[NUM_ATOMS];
     static Pos myGoalPositions[NUM_ATOMS];
     static int goalDists[NUM_ATOMS][NUM_FIELDS];
     static Atom atoms[NUM_ATOMS];
+    static HashTable<RevState> _revStates;
 };
 
 #endif

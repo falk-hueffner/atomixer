@@ -237,7 +237,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	    hashInsert(newState2);
 	    DEBUG0("inserted" << newState2);
 	    ++totalNodes;
-	    if ((++nodesGenerated & 0x3fffff) == 0)
+	    if ((++nodesGenerated & 0xfffff) == 0)
 		cout << "best: " << states[bestIndex] << endl
 		     << " Nodes: " << nodesGenerated
 		     << " nodes/second: "
