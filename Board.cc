@@ -81,7 +81,7 @@ Board::Board(const State& state) {
 	else
 	    myFields[pos.x()][pos.y()] = Atom(".");
     for (int i = 0; i < NUM_ATOMS; ++i) {
-	Pos pos = state.atomPositions()[i];
+	Pos pos(state.atomPositions()[i]);
 	myFields[pos.x()][pos.y()] = Problem::atom(i);
     }
 
