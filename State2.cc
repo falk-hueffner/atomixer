@@ -97,7 +97,6 @@ vector<Move> State2::rmoves() const {
 }
 
 void State2::calcMinMovesLeft() {
-    const int MAX_DIST = 6;
     _minMovesLeft = 0;
     for (int i = 0; i < NUM_UNIQUE; ++i)
 	_minMovesLeft += Problem::goalDist(i, atomPositions[i]);
@@ -108,7 +107,8 @@ void State2::calcMinMovesLeft() {
 	    + Problem::goalDist(i + 1, atomPositions[i]);
 	_minMovesLeft += min(moves1, moves2);
     }
-    if (_minMovesLeft <= MAX_DIST) {	// FIXMEFIXMEFIXME
+#if DO_REVERSE_SEARCH
+    if (_minMovesLeft <= REV_SEARCH_MAX_GOAL_DIST) {
 	RevState revState(atomPositions); // FIXME silly
 	HashTable<RevState>::ConstIterator i
 	    = Problem::revStates().find(revState);
@@ -119,9 +119,10 @@ void State2::calcMinMovesLeft() {
 	    }
 	} else {
 	    //cerr << *this << ": estimated: " << int(_minMovesLeft) << " but not in Problem::revStates()!!\n";
-	    _minMovesLeft = MAX_DIST + 1;
+	    _minMovesLeft = REV_SEARCH_MAX_GOAL_DIST + 1;
 	}
     }
+#endif
 }
 
 bool State2::operator<(const State2& other) const {
@@ -149,15 +150,12 @@ ostream& operator<<(ostream& out, const State2& state) {
     return out;
 }
 
-static const int NUM_WORDS = (NUM_ATOMS / sizeof(size_t));// * sizeof(size_t);
-static const size_t REST_MASK
-	= (((size_t) 1) << ((NUM_ATOMS - (NUM_WORDS * sizeof(size_t))) * 8)) - 1;
-
 size_t State2::hash() const {
     size_t result = 0;
 
     for (int i = 0; i < NUM_ATOMS; ++i)
-	result = 97 * result + atomPositions[i];
+	//result = 97 * result + atomPositions[i];
+	result = 5 * result + atomPositions[i];
 
     return result;
 }

@@ -113,46 +113,17 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 
     for (int i = 0; i < NUM_ATOMS; ++i)
 	calcDists(goalDists[i], myGoalPositions[i]);
-#if 0
+
+#if DO_REVERSE_SEARCH
     calcCloseStates();
 #endif
 }
 
-/*
 void Problem::calcCloseStates() {
-    const int MAX_DIST = 5;
-    set<State2> states[MAX_DIST + 1];
-    states[0].insert(State2(myGoalPositions));
-
-    for (int dist = 1; dist <= MAX_DIST; ++dist) {
-	for (set<State2>::const_iterator poldState = states[dist - 1].begin();
-	     poldState != states[dist - 1].end(); ++poldState) {
-	    const State2& oldState = *poldState;
-	    vector<Move> moves = oldState.rmoves();
-	    //cout << moves.size() << " rmoves.\n";
-	    for (int m = 0; m < moves.size(); ++m) {
-		State2 newState(oldState, moves[m]);
-		for (int dist2 = 0; dist2 < dist; ++dist2)
-		    if (states[dist2].find(newState) != states[dist2].end())
-			goto next;
-		states[dist].insert(newState);
-		next:
-		;
-	    }
-	}
-	cout << states[dist].size() << " states of dist " << dist << endl;
-    }
-
-    exit(0);
-}
-*/
-
-void Problem::calcCloseStates() {
-    const int MAX_DIST = 6;
-    HashTable<RevState> states[MAX_DIST + 1];
+    HashTable<RevState> states[REV_SEARCH_MAX_GOAL_DIST + 1];
     states[0].insertNew(RevState(myGoalPositions));
 
-    for (int dist = 1; dist <= MAX_DIST; ++dist) {
+    for (int dist = 1; dist <= REV_SEARCH_MAX_GOAL_DIST; ++dist) {
 	for (HashTable<RevState>::Iterator poldState = states[dist - 1].begin();
 	     poldState != states[dist - 1].end(); ++poldState) {
 	    const RevState& oldState = *poldState;
@@ -172,7 +143,7 @@ void Problem::calcCloseStates() {
     }
 
     _revStates.clear();
-    for (int dist = 0; dist <= MAX_DIST; ++dist)
+    for (int dist = 0; dist <= REV_SEARCH_MAX_GOAL_DIST; ++dist)
 	for (HashTable<RevState>::Iterator pState = states[dist].begin();
 	     pState != states[dist].end(); ++pState)
 	    _revStates.insertIfBetter(*pState);
