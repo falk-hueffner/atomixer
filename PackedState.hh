@@ -19,8 +19,8 @@
   $Id$
 */
 
-#ifndef STATE2_HH
-#define STATE2_HH
+#ifndef PACKED_STATE_HH
+#define PACKED_STATE_HH
 
 #include <iosfwd>
 #include <vector>
@@ -31,33 +31,25 @@ class Problem;
 
 using namespace std;
 
-class State2 {
-    friend ostream& operator<<(ostream& out, const State2& state);
+class PackedState {
+    friend ostream& operator<<(ostream& out, const PackedState& state);
 
 public:
-    State2() { }		// leave uninitialized
-    explicit State2(const Pos atomPositions[NUM_ATOMS]);
-    State2(const State2& state, const Move& move);
+    PackedState() { }		// leave uninitialized
+    explicit PackedState(const Pos atomPositions[NUM_ATOMS]);
+    explicit PackedState(const unsigned char atomPositions[NUM_ATOMS]);
+    PackedState(const PackedState& state, const Move& move);
 
-    bool operator<(const State2& other) const; // to put into STL set
-    bool operator==(const State2& other) const;
-    size_t hash() const;
+    bool operator<(const PackedState& other) const; // to put into STL set
+    bool operator==(const PackedState& other) const;
+    unsigned int hash() const;
 
     vector<Move> moves() const;
     vector<Move> rmoves() const;
-    void calcMinMovesLeft();
-    int minMovesLeft() const { return _minMovesLeft; }
-    int minTotalMoves() const { return numMoves + minMovesLeft(); }
+    int minMovesLeft() const;
 
-    int predecessor;
+private:
     unsigned char atomPositions[NUM_ATOMS];
-    unsigned char _minMovesLeft;
-    unsigned int numMoves : 7;
-    bool isOpen		  : 1;
-}
-#if HAVE_ATTRIBUTE_PACKED
-    __attribute__ ((packed))
-#endif
-    ;
+};
 
 #endif
