@@ -84,6 +84,7 @@ void hashInsert(const AStarState& state) {
 		    DEBUG0(" New way to this state is shorter.\n");
 		    oldState.numMoves = state.numMoves;
 		    oldState.isOpen = true;
+		    oldState.predecessor = state.predecessor;
 		    ++numOpen;
 		    if (hashTable[hash] < firstOpen) {
 			firstOpen = hashTable[hash];
@@ -115,7 +116,7 @@ int findBest(int maxMoves) {
 		if (states[searchIndex].isOpen) {
 		    if (states[searchIndex].minTotalMoves() <= minMinTotalMoves) {
 			if (states[searchIndex].minTotalMoves() != minMinTotalMoves)
-			    DEBUG0("*** WEIRD ***");
+			    DEBUG1("*** WEIRD ***");
 			DEBUG0("Best at " << searchIndex
 			       << ". Looked at " << numNodes << " states.");
 			return searchIndex;
@@ -137,7 +138,8 @@ int findBest(int maxMoves) {
 	    searchIndex = firstOpen;
 	    alreadyRestarted = true;
 	}
-	DEBUG0("No states with max. " << minMinTotalMoves << " minTotalMoves.");
+	DEBUG1("No states with max. " << minMinTotalMoves
+	       << " minTotalMoves in queue.");
 	if (++minMinTotalMoves > maxMoves) {
 	    DEBUG0("No states within limit of " << maxMoves << " moves.");
 	    return 0;
@@ -225,14 +227,13 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 			done = true;
 		    pNextNode = pNode;
 		    DEBUG0("predecessor of " << *pNode
-			  << " is " << pNode->predecessor);
+			   << " is " << pNode->predecessor);
 		    pNode = &states[pNode->predecessor];
 
 		    vector<Move> moves = pNode->moves();
 
 		    for (vector<Move>::const_iterator m = moves.begin();
 			 m != moves.end(); ++m) {
-
 			if (AStarState(*pNode, *m) == *pNextNode) {
 			    solution.push_front(*m);
 			    break;
