@@ -40,8 +40,8 @@ public:
     static const Pos* startPositions() { return myStartPositions; }
     static Pos startPosition(int nr) { return myStartPositions[nr]; }
     static Pos goalPosition(int nr) { return myGoalPositions[nr]; }
-    static int goalDist(int atomNr, int fieldNr) {
-	return goalDists[atomNr][fieldNr];
+    static int goalDist(int atomNr, Pos pos) {
+	return goalDists[atomNr][pos.fieldNumber()];
     }
     static Atom atom(int nr) { return atoms[nr]; }
 
