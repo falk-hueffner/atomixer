@@ -34,6 +34,7 @@
 
 #include "Board.hh"
 #include "State.hh"
+#include "State2.hh"
 #include "Problem.hh"
 
 using namespace std;
@@ -81,6 +82,19 @@ Board::Board(const State& state) {
 	    myFields[pos.x()][pos.y()] = Atom(".");
     for (int i = 0; i < NUM_ATOMS; ++i) {
 	Pos pos = state.atomPositions()[i];
+	myFields[pos.x()][pos.y()] = Problem::atom(i);
+    }
+
+}
+
+Board::Board(const State2& state) {
+    for (Pos pos = 0; pos != Pos::end(); ++pos)
+	if (Problem::isBlock(pos))
+	    myFields[pos.x()][pos.y()] = Atom("#");
+	else
+	    myFields[pos.x()][pos.y()] = Atom(".");
+    for (int i = 0; i < NUM_ATOMS; ++i) {
+	Pos pos = state.atomPositions[i];
 	myFields[pos.x()][pos.y()] = Problem::atom(i);
     }
 
