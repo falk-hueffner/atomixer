@@ -19,25 +19,10 @@
   $Id$
 */
 
-#ifndef POS_HH
-#define POS_HH
+#ifndef SIZE_HH
+#define SIZE_HH
 
-#include <iosfwd>
-
-#include "Size.hh"
-
-class Pos {
-public:
-    Pos() { }		// leave uninitialized
-    Pos(int x, int y) : p(y * XSIZE + x) { }
-
-    int x() const { return p % XSIZE; }
-    int y() const { return p / XSIZE; }
-
-private:
-    int p;
-};
-
-ostream& operator<<(ostream& out, const Pos& pos);
+// these are hardcoded for speed and simplicity
+const int XSIZE = 16, YSIZE = 15;
 
 #endif
