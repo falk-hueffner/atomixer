@@ -70,6 +70,7 @@ public:
 };
 
 deque<Move> aStar(const State& start, int maxDist) {
+    static long long totalNodes = 0;
     long counter = 0;
     long stales = 0;
 
@@ -82,6 +83,7 @@ deque<Move> aStar(const State& start, int maxDist) {
 
     //cout << "start node:\n" << *pStartNode << endl;
     open.push(QueueNode(pStartNode));
+    ++totalNodes;
 
     while (!open.empty()) {
 	QueueNode bestNode = open.top();
@@ -94,12 +96,12 @@ deque<Move> aStar(const State& start, int maxDist) {
 		 << "\nstales: " << stales
 		 << endl;
 
-	//if (bestNode.minTotalDist > bestNode.node->minTotalDist && 0) {
+	if (bestNode.minTotalDist > bestNode.node->minTotalDist && 0) {
 	    // a better path to this state has already been examined
-	//--stales;
+	    --stales;
 	    //cout << "obsolete, disposing (stale queue members: " << stales << ")\n";
-	// continue;
-	//}
+	     continue;
+	}
 
 	//deque<Problem::Move> moves = bestNode.node->state.moves();
 	vector<Move> moves = bestNode.node->state.moves();
@@ -111,6 +113,7 @@ deque<Move> aStar(const State& start, int maxDist) {
 		cout << "Found solution.\n"
 		     << "\nnodes: " << nodes.size()
 		     << "\nqueuenodes: " << open.size()
+		     << "\ntotal nodes: " << totalNodes
 		     << "\nstales: " << stales
 		     << endl;
 		deque<Move> solution;
@@ -168,6 +171,7 @@ deque<Move> aStar(const State& start, int maxDist) {
 	    }
 	    
 	    open.push(QueueNode(pNewNode));
+	    ++totalNodes;
 	}
     }
 
