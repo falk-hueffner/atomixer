@@ -5,8 +5,8 @@ AUTOMAKE_OPTIONS = foreign
 bin_PROGRAMS = atomixer
 
 atomixer_SOURCES = \
-	AStar.cc	\
-	AStar.hh	\
+	AStar2.cc	\
+	AStar2.hh	\
 	Atom.cc		\
 	Atom.hh		\
 	Board.cc	\
@@ -22,6 +22,6 @@ atomixer_SOURCES = \
 	Problem.cc	\
 	Problem.hh	\
 	Size.hh		\
-	State.cc	\
-	State.hh	\
+	State2.cc	\
+	State2.hh	\
 	main.cc
