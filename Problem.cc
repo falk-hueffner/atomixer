@@ -25,6 +25,7 @@
 #include <queue>
 #include <set>
 
+#include "parameters.hh"
 #include "Dir.hh"
 #include "Level.hh"
 #include "Problem.hh"
@@ -151,7 +152,11 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
     }
 
     for (int i = 0; i < NUM_ATOMS; ++i)
+#ifdef DO_BACKWARD_SEARCH
+	calcDists(goalDists[i], myStartPositions[i]);
+#else
 	calcDists(goalDists[i], myGoalPositions[i]);
+#endif
 
 #ifdef DO_REVERSE_SEARCH
     calcCloseStates();

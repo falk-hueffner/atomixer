@@ -21,6 +21,7 @@
 
 #include <algorithm>
 
+#include "algorithm.hh"
 #include "Problem.hh"
 #include "State.hh"
 
@@ -98,7 +99,11 @@ bool State::operator==(const State& other) const {
     return true;
 }
 
+#ifdef DO_BACKWARD_SEARCH
+vector<Move> State::rmoves() const {
+#else
 vector<Move> State::moves() const {
+#endif
     vector<Move> moves;
     moves.reserve(NUM_ATOMS * 3);
 
@@ -124,7 +129,11 @@ vector<Move> State::moves() const {
     return moves;
 }
 
+#ifdef DO_BACKWARD_SEARCH
+vector<Move> State::moves() const {
+#else
 vector<Move> State::rmoves() const {
+#endif
     vector<Move> moves;
     moves.reserve(NUM_ATOMS * 3);
 
