@@ -80,6 +80,25 @@ public:
 	_fields[move.p2.fieldNumber()] = atomNr;
 	_fields[move.p1.fieldNumber()] = EMPTY;
 	_positions[atomNr] = move.p2;
+
+	// canonicallify pairs: the first one should always have the lower
+	// position. This avoids storing logically identical states twice in the
+	// hash table.
+	if (atomNr >= PAIRED_START) {
+	    if ((atomNr - PAIRED_START) % 2 == 0) {
+		if (_positions[atomNr + 1] < _positions[atomNr]) {
+		    swap(_fields[_positions[atomNr + 1].fieldNumber()],
+			 _fields[_positions[atomNr].fieldNumber()]);
+		    swap(_positions[atomNr + 1], _positions[atomNr]);
+		}
+	    } else {
+		if (_positions[atomNr - 1] > _positions[atomNr]) {
+		    swap(_fields[_positions[atomNr - 1].fieldNumber()],
+			 _fields[_positions[atomNr].fieldNumber()]);
+		    swap(_positions[atomNr - 1], _positions[atomNr]);
+		}
+	    }
+	}
 	calcMinMovesLeft();
     }
 
@@ -88,6 +107,25 @@ public:
 	_fields[move.p1.fieldNumber()] = atomNr;
 	_fields[move.p2.fieldNumber()] = EMPTY;
 	_positions[atomNr] = move.p1;
+
+	// canonicallify pairs: the first one should always have the lower
+	// position. This avoids storing logically identical states twice in the
+	// hash table.
+	if (atomNr >= PAIRED_START) {
+	    if ((atomNr - PAIRED_START) % 2 == 0) {
+		if (_positions[atomNr + 1] < _positions[atomNr]) {
+		    swap(_fields[_positions[atomNr + 1].fieldNumber()],
+			 _fields[_positions[atomNr].fieldNumber()]);
+		    swap(_positions[atomNr + 1], _positions[atomNr]);
+		}
+	    } else {
+		if (_positions[atomNr - 1] > _positions[atomNr]) {
+		    swap(_fields[_positions[atomNr - 1].fieldNumber()],
+			 _fields[_positions[atomNr].fieldNumber()]);
+		    swap(_positions[atomNr - 1], _positions[atomNr]);
+		}
+	    }
+	}
 	calcMinMovesLeft();
     }
 
@@ -109,6 +147,7 @@ private:
 		+ Problem::goalDist(i + 1, _positions[i]);
 	    _minMovesLeft += min(moves1, moves2);
 	}
+	//_minMovesLeft *= 1.35;
     }
 
     Field _fields[NUM_FIELDS];
