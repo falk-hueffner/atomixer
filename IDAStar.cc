@@ -45,7 +45,7 @@ using namespace std;
 extern int64_t totalNodesGenerated;
 
 // maximum amount of memory to be used
-static const unsigned int MEMORY = 900 * 1024 * 1024;
+static const unsigned int MEMORY = 300 * 1024 * 1024;
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
@@ -83,6 +83,20 @@ deque<Move> IDAStar(int maxDist) {
 
 static string spaces(int n) {
     return string(n, ' ');
+}
+
+static inline bool between(Pos p1, Pos p2, Dir dir, Pos pm) {
+    switch(dir) {
+    case UP:
+	return p1.x() == pm.x() && p2 <= pm && pm <= p1;
+    case DOWN:
+	return p1.x() == pm.x() && p1 <= pm && pm <= p2;
+    case LEFT:
+	return p2 <= pm && pm <= p1;
+    case RIGHT:
+	return p1 <= pm && pm <= p2;
+    }
+    assert(false);
 }
 
 static bool dfs(IDAStarMove lastMove) {
@@ -132,26 +146,11 @@ static bool dfs(IDAStarMove lastMove) {
 		if (moves > 0) {
 		    if (atomNo < lastMove.atomNo) {
 			// this is only allowed if the two moves are not independent.
-			// case 1
-			for (Pos p = lastMove.p1; p != lastMove.p2; p += lastMove.dir)
-			    if (p == newPos)
-				goto dependent;
-			// case 2
-			if (newPos + dir == lastMove.p2)
-			    goto dependent;
-			// case 3
-			for (Pos p = startPos; p != newPos; p += dir)
-			    if (p == lastMove.p1)
-				goto dependent;
-			// case 4
-			if (newPos == lastMove.p2 + lastMove.dir)
-			    goto dependent;
-				
-			// all test failed: moves are independent. Prune this
-			// ordering.
-			continue;
-		    dependent:
-			;		// moves are dependent; no ordering possible
+			if (!(between(lastMove.p1, lastMove.p2, lastMove.dir, newPos)
+			      || newPos + dir == lastMove.p2
+			      || between(startPos, newPos, dir, lastMove.p1)
+			      || newPos == lastMove.p2 + lastMove.dir))
+			    continue;
 		    }
 		}
 		state.apply(move);

@@ -9,10 +9,12 @@ pc() {
 
 while sleep 60; do
   runtime=`ps -C $prog -otime --no-headers 2>/dev/null`
-  runtime=${runtime/:/ }
-  runtime=${runtime/:/ }
-  minutes=$((`pc 1 "$runtime"` * 60 + `pc 2 "$runtime"`))
-  if [ $minutes -gt $limit ]; then
-    killall $prog
+  if [ $runtime ]; then
+    runtime=${runtime/:/ }
+    runtime=${runtime/:/ }
+    minutes=$((`pc 1 "$runtime"` * 60 + `pc 2 "$runtime"`))
+    if [ $minutes -ge $limit ]; then
+      killall $prog
+    fi
   fi
 done
