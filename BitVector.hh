@@ -22,12 +22,7 @@
 #ifndef BITVECTOR_HH
 #define BITVECTOR_HH
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#else
-typedef unsigned long long uint64_t;
-#endif
-
+#include "stdint.h"
 #include <assert.h>
 
 // unfortunately, vector<bool> has no operator[](uint64_t), so it is limited

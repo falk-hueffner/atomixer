@@ -49,9 +49,10 @@ elif test x$compaq_cxx = xyes; then
    CXXFLAGS="$CXXFLAGS -fast -g3 -W -Wall -Wno-sign-compare -msg_display_tag -msg_disable intconlosbit -msg_disable boolexprconst -msg_disable signedonebitfld"
 fi
 
-AC_CHECK_HEADERS(hash_map ext/hash_map stdint.h)
+AC_NEED_STDINT_H(stdint.h)
+AC_CHECK_HEADERS(hash_map ext/hash_map)
 
-# Compaq C++ has <sstream>, but it doesn't work...
+# Compaq C++ has <sstream>, but it doesn't work in older versions...
 AC_MSG_CHECKING([whether stringstream works])
 AC_TRY_COMPILE([#include <sstream>],[std::ostringstream s;],
                [AC_MSG_RESULT(yes)
