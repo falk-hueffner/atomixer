@@ -23,6 +23,7 @@
 #define STATE_HH
 
 #include <iosfwd>
+#include <vector>
 
 class Problem;
 
