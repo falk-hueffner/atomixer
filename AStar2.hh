@@ -22,6 +22,8 @@
 #ifndef ASTAR2_HH
 #define ASTAR2_HH
 
+#define DO_MREC
+
 #include <deque>
 
 class State2;
@@ -31,7 +33,7 @@ class State2;
 using namespace std;
 
 // maximum amount of memory to be used
-static const unsigned int MEMORY = 320 * 1024 * 1024;
+static const unsigned int MEMORY = 20 * 1024 * 1024;
 
 deque<Move> aStar2(const State2& start, int maxDist);
 
