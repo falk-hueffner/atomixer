@@ -189,5 +189,5 @@ std::ostream& operator<<(std::ostream& out, const State& state) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	out << Pos(state.atomPositions_[i]) << ' ';
 
-    return out;
+    return out << state.minMovesLeft();
 }
