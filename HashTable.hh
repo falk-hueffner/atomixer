@@ -53,10 +53,7 @@ public:
     void clear(int initialSize, double nloadFactor = 1.5) {
 	loadFactor = nloadFactor;
 	elements.clear();
-	cout << "Reserving space for " << initialSize + 1 << " elems.\n";
 	elements.reserve(initialSize + 1);
-	cout << "capacity is: " << elements.capacity() << endl;
-	cout << "capacity is: " << capacity() << endl;
 	elements.push_back(Element()); // 0 reserved for 'empty'
 	hashTable.clear();
 	hashTable.resize(int((initialSize + 1) * loadFactor));
