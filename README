@@ -9,3 +9,9 @@ Run with e. g.:
 ./run.sh levels/katomic_01
 
 Most of the source will be recompiled for each level.
+
+The solver does currently not detect unsolvable levels, so it will run
+infinitely on them.
+
+Make sure the level is surrounded by walls. To test if the level gets
+parsed correctly, try running atomixer with the --show option.
