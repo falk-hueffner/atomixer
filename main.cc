@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 		for (deque<Move>::const_iterator m = moves.begin();
 		     m != moves.end(); ++m) {
 		    state = State2(state, *m);
-		    cout << Board(state);
+		    //cout << Board(state);
 		}
 		cout << "Final board:\n"
 		     << Board(state)
