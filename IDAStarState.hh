@@ -22,137 +22,53 @@
 #ifndef IDASTARSTATE_HH
 #define IDASTARSTATE_HH
 
-#include <iostream>
-
+#include "Pos.hh"
 #include "Problem.hh"
+#include "State.hh"
 
-class IDAStarMove {
-    friend class IDAStarState;
+// For an IDAStarState, memory is not a concern; there is only a single
+// instance being used in IDAStar. So we can:
+// * cache minMovesLeft
+// * keep a matrix of blocked fields for faster move generation
+
+class IDAStarState : public State {
 public:
-    IDAStarMove() { }
-    IDAStarMove(int natomNo, Dir ndir, Pos np1, Pos np2)
-	: atomNo(natomNo), dir(ndir), p1(np1), p2(np2) { }
-
-//private:
-    int atomNo;
-    Dir dir;
-    Pos p1, p2;
-};
-
-class IDAStarState {
-    friend ostream& operator<<(ostream& out, const IDAStarState& state);
-public:
-    typedef int Field;
-    static const Field EMPTY = -1;
-    static const Field BLOCK = NUM_ATOMS;
-
-    IDAStarState() { }		// leave uninitialized
-    IDAStarState(int /* dummy */) {
-	for (Pos pos = 0; pos != Pos::end(); ++pos) {
-	    _fields[pos.fieldNumber()] = EMPTY;
-	    if (Problem::isBlock(pos))
-		_fields[pos.fieldNumber()] = BLOCK;
-	}
-	for (int i = 0; i < NUM_ATOMS; ++i) {
-	    _positions[i] = Problem::startPosition(i);
-	    _fields[Problem::startPosition(i).fieldNumber()] = i;
-	}
-
+    // leave uninitialized
+    IDAStarState() { }
+    IDAStarState(const State& state)
+	: State(state) {
+	for (Pos pos = 0; pos != Pos::end(); ++pos)
+	    isBlocking_[pos.fieldNumber()] = Problem::isBlock(pos);
+	for (int i = 0; i < NUM_ATOMS; ++i)
+	    isBlocking_[atomPosition(i)] = true;
+	
 	calcMinMovesLeft();
     }
 
-    IDAStarState(unsigned char atomPositions[NUM_ATOMS]) {
-	for (Pos pos = 0; pos != Pos::end(); ++pos) {
-	    _fields[pos.fieldNumber()] = EMPTY;
-	    if (Problem::isBlock(pos))
-		_fields[pos.fieldNumber()] = BLOCK;
-	}
-	for (int i = 0; i < NUM_ATOMS; ++i) {
-	    _positions[i] = atomPositions[i];
-	    _fields[atomPositions[i]] = i;
-	}
-
-	calcMinMovesLeft();	
+    // these override methods from State
+    int minMovesLeft() const { return minMovesLeft_; }
+    void apply(const Move& move) {
+	State::apply(move);
+	isBlocking_[move.pos1().fieldNumber()] = false;
+	isBlocking_[move.pos2().fieldNumber()] = true;
+	calcMinMovesLeft();
     }
-
-    void apply(const IDAStarMove& move) {
-	int atomNr = _fields[move.p1.fieldNumber()];
-	_fields[move.p2.fieldNumber()] = atomNr;
-	_fields[move.p1.fieldNumber()] = EMPTY;
-	_positions[atomNr] = move.p2;
-
-	// canonicallify pairs: the first one should always have the lower
-	// position. This avoids storing logically identical states twice in the
-	// hash table.
-	if (atomNr >= PAIRED_START) {
-	    if ((atomNr - PAIRED_START) % 2 == 0) {
-		if (_positions[atomNr + 1] < _positions[atomNr]) {
-		    swap(_fields[_positions[atomNr + 1].fieldNumber()],
-			 _fields[_positions[atomNr].fieldNumber()]);
-		    swap(_positions[atomNr + 1], _positions[atomNr]);
-		}
-	    } else {
-		if (_positions[atomNr - 1] > _positions[atomNr]) {
-		    swap(_fields[_positions[atomNr - 1].fieldNumber()],
-			 _fields[_positions[atomNr].fieldNumber()]);
-		    swap(_positions[atomNr - 1], _positions[atomNr]);
-		}
-	    }
-	}
+    void undo(const Move& move) {
+	State::undo(move);
+	isBlocking_[move.pos1().fieldNumber()] = true;
+	isBlocking_[move.pos2().fieldNumber()] = false;
 	calcMinMovesLeft();
     }
 
-    void undo(const IDAStarMove& move) {
-	int atomNr = _fields[move.p2.fieldNumber()];
-	_fields[move.p1.fieldNumber()] = atomNr;
-	_fields[move.p2.fieldNumber()] = EMPTY;
-	_positions[atomNr] = move.p1;
-
-	// canonicallify pairs: the first one should always have the lower
-	// position. This avoids storing logically identical states twice in the
-	// hash table.
-	if (atomNr >= PAIRED_START) {
-	    if ((atomNr - PAIRED_START) % 2 == 0) {
-		if (_positions[atomNr + 1] < _positions[atomNr]) {
-		    swap(_fields[_positions[atomNr + 1].fieldNumber()],
-			 _fields[_positions[atomNr].fieldNumber()]);
-		    swap(_positions[atomNr + 1], _positions[atomNr]);
-		}
-	    } else {
-		if (_positions[atomNr - 1] > _positions[atomNr]) {
-		    swap(_fields[_positions[atomNr - 1].fieldNumber()],
-			 _fields[_positions[atomNr].fieldNumber()]);
-		    swap(_positions[atomNr - 1], _positions[atomNr]);
-		}
-	    }
-	}
-	calcMinMovesLeft();
-    }
-
-    Field field(Pos pos) const { return _fields[pos.fieldNumber()]; }
-    bool isBlocking(Pos pos) const { return _fields[pos.fieldNumber()] != EMPTY; }
-    Pos position(int atomNo) const { return _positions[atomNo]; }
-    int minMovesLeft() const { return _minMovesLeft; }
-    const Pos* positions() const { return _positions; }
+    bool isBlocking(Pos pos) const { return isBlocking_[pos.fieldNumber()]; }
 
 private:
-    void calcMinMovesLeft() {
-	_minMovesLeft = 0;
-	for (int i = 0; i < NUM_UNIQUE; ++i)
-	    _minMovesLeft += Problem::goalDist(i, _positions[i]);
-	for (int i = PAIRED_START; i < NUM_ATOMS; i += 2) {
-	    int moves1 = Problem::goalDist(i, _positions[i])
-		+ Problem::goalDist(i + 1, _positions[i + 1]);
-	    int moves2 = Problem::goalDist(i, _positions[i + 1])
-		+ Problem::goalDist(i + 1, _positions[i]);
-	    _minMovesLeft += min(moves1, moves2);
-	}
-	//_minMovesLeft *= 1.35;
-    }
+    // unimplemented (overrides State::minMovesLeft()!)
+    int minTotalMoves() const;
 
-    Field _fields[NUM_FIELDS];
-    Pos _positions[NUM_ATOMS];
-    int _minMovesLeft;
+    void calcMinMovesLeft() { minMovesLeft_ = State::minMovesLeft(); }
+    unsigned int minMovesLeft_;
+    bool isBlocking_[NUM_FIELDS]; // FIXME try whether char is faster
 };
 
 #endif

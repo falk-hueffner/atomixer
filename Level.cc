@@ -74,7 +74,6 @@ void Level::printStats() const {
 	}
     }
     map<int, int> bucketSizes;
-    //cout << "Atoms: " << setw(2) << numAtoms <<  '|';
     cout << '|' << setw(2) << numAtoms <<  '|'
 	 << setw(2) << myGoalPositions.size() << '|';
     for (map<Atom, int>::const_iterator p = atomCounts.begin();
@@ -82,17 +81,18 @@ void Level::printStats() const {
 	++bucketSizes[p->second];
     }
 
-    for (int i = 1; i <= 5; ++i) { // no test level with > 5 yet...
+    int multiAtoms = numAtoms;
+    for (int i = 1; i <= 2; ++i) {
 	if (bucketSizes[i] == 0)
 	    cout <<  "  |";
 	else
-	    cout << setw(2) << bucketSizes[i] << '|';
+	    cout << setw(2) << bucketSizes[i] * i << '|';
+	multiAtoms -= bucketSizes[i] * i;
     }
-
-    //cout << "Goal positions: " << myGoalPositions.size() << endl;
-    //for (int i = 0; i < myGoalPositions.size(); ++i)
-    //cout << '\t' << myGoalPositions[i] << endl;
-    
+    if (multiAtoms == 0)
+	cout <<  "  |";
+    else
+	cout << setw(2) << multiAtoms << '|';
 }
 
 ostream& operator<<(ostream& out, const Level& level) {

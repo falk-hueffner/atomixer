@@ -19,20 +19,16 @@
   $Id$
 */
 
-#ifndef SIZE_HH
-#define SIZE_HH
+#include "AStarState.hh"
 
-// these are hardcoded for speed and simplicity
-//const int XSIZE = 16, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
-const int XSIZE = 18, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
+AStarState::AStarState(const State& state)
+    : State(state), predecessor(0), numMoves(0), isOpen(true) {
+    calcMinMovesLeft();
+}
 
-const int NUM_UNIQUE = @unique@;
-const int NUM_PAIRED = @paired@;	// note *paired* not *pairs*
-const int NUM_MULTI = @multi@;
-const int NUM_ATOMS = NUM_UNIQUE + NUM_PAIRED + NUM_MULTI;
-
-const int PAIRED_START = NUM_UNIQUE;
-const int PAIRED_END = PAIRED_START + NUM_PAIRED;
-const int MULTI_START = PAIRED_END;
-
-#endif
+AStarState::AStarState(const AStarState& state, const Move& move)
+    : State(state, move) {
+    numMoves = state.numMoves + 1;
+    isOpen = true;
+    calcMinMovesLeft();
+}

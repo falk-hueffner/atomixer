@@ -7,6 +7,8 @@ bin_PROGRAMS = atomixer
 atomixer_SOURCES = \
 	AStar2.cc	\
 	AStar2.hh	\
+	AStarState.cc	\
+	AStarState.hh	\
 	Atom.cc		\
 	Atom.hh		\
 	Board.cc	\
@@ -16,17 +18,17 @@ atomixer_SOURCES = \
 	HashTable.hh	\
 	IDAStar.cc	\
 	IDAStar.hh	\
+	IDAStarCacheState.hh	\
+	IDAStarState.hh	\
 	Level.cc	\
 	Level.hh	\
 	Move.cc		\
 	Move.hh		\
-	PackedState.cc	\
-	PackedState.hh	\
 	Pos.cc		\
 	Pos.hh		\
 	Problem.cc	\
 	Problem.hh	\
 	Size.hh		\
-	State2.cc	\
-	State2.hh	\
+	State.cc	\
+	State.hh	\
 	main.cc

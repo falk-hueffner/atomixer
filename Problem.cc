@@ -28,13 +28,13 @@
 #include "Dir.hh"
 #include "Level.hh"
 #include "Problem.hh"
-#include "State2.hh"
 
 using namespace std;
 
 bool Problem::myIsBlock[NUM_FIELDS];
 Pos Problem::myStartPositions[NUM_ATOMS];
 Pos Problem::myGoalPositions[NUM_ATOMS];
+int Problem::myNumIdentical[NUM_ATOMS + 100];
 int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
 int Problem::goalNr;
 Atom Problem::atoms[NUM_ATOMS];
@@ -56,7 +56,7 @@ void Problem::setLevel(const Level& level) {
 
     assert(startAtoms.size() == NUM_ATOMS);
 
-    int numUnique = 0, numPaired = 0;
+    int numUnique = 0, numPaired = 0, numMulti = 0;
     for (AtomMap::const_iterator pf = startAtoms.begin();
 	 pf != startAtoms.end(); ++pf) {
 	const Atom& atom = pf->first;
@@ -81,14 +81,34 @@ void Problem::setLevel(const Level& level) {
 	    break;
 	}
 	default:
-	    assert(!"Too many equal atoms");
+	    cout << "num: " << startAtoms.count(atom) << endl;
+	    for (int i = 0; i < startAtoms.count(atom); ++i) {
+		if (i != 0)
+		    ++pf;
+		assert(pf->first == atom);
+		atoms[MULTI_START + numMulti] = atom;
+		myStartPositions[MULTI_START + numMulti] = pf->second;
+		cout << "myStartPositions[" << MULTI_START + numMulti
+		     << "] = " << myStartPositions[MULTI_START + numMulti]
+		     << endl;
+		myNumIdentical[MULTI_START + numMulti] = startAtoms.count(atom);
+		cout << "myNumIdentical[" << MULTI_START + numMulti
+		     << "] = " << myNumIdentical[MULTI_START + numMulti]
+		     << endl;
+		++numMulti;
+	    }
 	}
     }
-    assert (numUnique == NUM_UNIQUE);
-    assert (numPaired == NUM_PAIRED);
+    cout << "unique: " << numUnique << "; paired: " << numPaired
+	 << "; multi: " << numMulti << endl;
+    assert(numUnique == NUM_UNIQUE);
+    assert(numPaired == NUM_PAIRED);
+    assert(numMulti == NUM_MULTI);
+    cout << "returning from " << __PRETTY_FUNCTION__ << endl;
 }
 
 void Problem::setGoal(const Level& level, int goalPosNr) {
+    cout << "Problem::setGoal\n";
     goalNr = goalPosNr;
     Pos d = level.goalPos(goalPosNr);
     int dx = d.x(), dy = d.y();
@@ -107,12 +127,27 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 	const Atom& atom = level.startBoard().field(myStartPositions[i]);
 	myGoalPositions[i] = goalAtoms.find(atom)->second;
     }
-    for (int i = PAIRED_START; i < NUM_ATOMS; i += 2) {
+    for (int i = PAIRED_START; i < PAIRED_END; i += 2) {
 	const Atom& atom = level.startBoard().field(myStartPositions[i]);
 	AtomMap::const_iterator p = goalAtoms.find(atom);
 	myGoalPositions[i] = p->second;
 	++p;
 	myGoalPositions[i + 1] = p->second;
+    }
+    cout << "MULTI_START = " << MULTI_START << endl;
+    for (int i = MULTI_START; i < NUM_ATOMS; i += Problem::numIdentical(i)) {
+	const Atom& atom = level.startBoard().field(myStartPositions[i]);
+	AtomMap::const_iterator p = goalAtoms.find(atom);
+	for (int j = 0; j < Problem::numIdentical(i); ++j, ++p)
+	    myGoalPositions[i + j] = p->second;
+	cout << "Atom Nr." << i << ": " << Problem::numIdentical(i)
+	     << " times, starting positions";
+	for (int t = i; t < i + Problem::numIdentical(i); ++t)
+	    cout << ' ' << myStartPositions[t];
+	cout << "; goal positions";
+	for (int t = i; t < i + Problem::numIdentical(i); ++t)
+	    cout << ' ' << myGoalPositions[t];
+	cout << endl;
     }
 
     for (int i = 0; i < NUM_ATOMS; ++i)

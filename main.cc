@@ -30,11 +30,18 @@ typedef long long int64_t;
 #include <iostream>
 #include <fstream>
 
+#define USE_IDASTAR
+//#undef USE_IDASTAR
+
 #include "Level.hh"
 #include "Problem.hh"
-#include "State2.hh"
-//#include "AStar2.hh"
-#include "IDAStar.hh"
+#include "State.hh"
+
+#ifdef USE_IDASTAR
+# include "IDAStar.hh"
+#else
+# include "AStar2.hh"
+#endif
 
 using namespace std;
 
@@ -52,8 +59,8 @@ int main(int argc, char* argv[]) {
     assert(argc >= 2);
 
     if (argc > 2) {		// info
-	cout << "Level                   |#A|#G|1x|2x|3x|4x|5x|\n"
-	     << "------------------------+--+--+--+--+--+--+--+\n";
+	cout << "Level                   |#A|#G|1x|2x|nx|\n"
+	     << "------------------------+--+--+--+--+--+\n";
 	for (int i = 1; i < argc; ++i) {
 	    cout << argv[i] << '\t';
 	    ifstream levelStream(argv[i]);
@@ -70,15 +77,19 @@ int main(int argc, char* argv[]) {
     assert(levelStream);
     Level level(levelStream);
     cout << level.startBoard();
+    cout << "calling set level\n";
     Problem::setLevel(level);
+    cout << "called set level\n";
 
     string levelName = string(argv[1]);
     while (levelName.find('/') != string::npos)
 	levelName = levelName.substr(levelName.find('/') + 1);
-    cout << levelName << endl;
+    cout << "Solving " << levelName << "...\n";
 
-    int knownLowerBound = 0;
-    
+    int knownLowerBound = 15;
+    //int knownLowerBound = 0;
+
+    /*
     ifstream statStream("stats");
     assert(statStream);
     string line;
@@ -95,8 +106,7 @@ int main(int argc, char* argv[]) {
 		cout << "Known lower bound: " << knownLowerBound << endl;
 	}
     }
-
-    cout << "sizeof(State2) = " << sizeof(State2) << endl;
+    */
 
     for (int maxMoves = knownLowerBound; ; ++maxMoves) {
 	cout << "******************** " << maxMoves << " ********************\n";
@@ -105,14 +115,17 @@ int main(int argc, char* argv[]) {
 		 << maxMoves << ": " << level.goalPos(goalNr)
 		 << " --------------------\n";
 	    Problem::setGoal(level, goalNr);
-	    State2 start(Problem::startPositions());
-	    //deque<Move> moves = aStar2(start, maxMoves);
+	    State start(Problem::startPositions());
+#ifdef USE_IDASTAR
 	    deque<Move> moves = IDAStar(maxMoves);
+#else
+	    deque<Move> moves = aStar2(start, maxMoves);
+#endif
 	    if (moves.size() > 0) {
-		State2 state = start;
+		State state = start;
 		for (deque<Move>::const_iterator m = moves.begin();
 		     m != moves.end(); ++m) {
-		    state = State2(state, *m);
+		    state = State(state, *m);
 		    //cout << Board(state);
 		}
 		cout << "Final board:\n"
