@@ -1,16 +1,12 @@
 #! /bin/sh
 
-timelimit=30
-
 exec 6>batch.$$.log
-
-./timeguard.sh atomixer $timelimit &
 
 for i in `cat stats | awk '{print "levels/"$1}'`; do
     if [ -f $i ]; then
 	level=`basename $i`
 	line=`grep $level stats`
-	solved=`echo "$line" | cut -d'|' -f 11`
+	#solved=`echo "$line" | cut -d'|' -f 11`
 	if [ $solved ]; then
 	    echo $level: already solved in $solved moves
 	else
@@ -20,5 +16,3 @@ for i in `cat stats | awk '{print "levels/"$1}'`; do
 	fi
     fi
 done
-
-killall timeguard.sh
