@@ -37,7 +37,9 @@ Pos Problem::myStartPositions[NUM_ATOMS];
 Pos Problem::myGoalPositions[NUM_ATOMS];
 int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
 Atom Problem::atoms[NUM_ATOMS];
+#ifdef DO_REVERSE_SEARCH
 HashTable<RevState> Problem::_revStates;
+#endif
 
 void Problem::setLevel(const Level& level) {
     typedef multimap<Atom, Pos> AtomMap;

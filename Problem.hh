@@ -28,8 +28,10 @@ class Board;
 #include "Atom.hh"
 #include "Pos.hh"
 #include "Size.hh"
+#ifdef DO_REVERSE_SEARCH
 #include "RevState.hh"
 #include "HashTable.hh"
+#endif
 
 using namespace std;
 
@@ -46,18 +48,24 @@ public:
 	return goalDists[atomNr][pos.fieldNumber()];
     }
     static Atom atom(int nr) { return atoms[nr]; }
+#ifdef DO_REVERSE_SEARCH
     static const HashTable<RevState>& revStates() { return _revStates; }
+#endif
 
 private:
     static void calcDists(int dists[NUM_FIELDS], Pos goal);
+#ifdef DO_REVERSE_SEARCH
     static void calcCloseStates();
+#endif
 
     static bool myIsBlock[NUM_FIELDS];
     static Pos myStartPositions[NUM_ATOMS];
     static Pos myGoalPositions[NUM_ATOMS];
     static int goalDists[NUM_ATOMS][NUM_FIELDS];
     static Atom atoms[NUM_ATOMS];
+#ifdef DO_REVERSE_SEARCH
     static HashTable<RevState> _revStates;
+#endif
 };
 
 #endif
