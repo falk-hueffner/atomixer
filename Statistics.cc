@@ -37,7 +37,7 @@ Timer    Statistics::timer;
 void Statistics::print(std::ostream& out) {
     out << " Time:             " << timer
 	<< "\n States generated: " << statesGenerated
-	<< "\n States/second     " << double(statesGenerated) / timer.seconds()
+	<< "\n States/second     " << uint64_t(double(statesGenerated) / timer.seconds())
 	<< "\n States expanded:  " << statesExpanded
 	<< "\n Branching factor: " << double(numChildren) / double(statesExpanded)
 	<< "\n  effective:       " << double(numChildren - numPruned)
