@@ -134,14 +134,15 @@ int findBest(int maxMoves) {
 }
 
 deque<Move> aStar2(const State2& start, int maxMoves) {
+    if (start.minTotalMoves() > maxMoves)
+	return deque<Move>();	// saves the allocations which can take quite some time
+
     DEBUG0("MAX_STATES = " << MAX_STATES);
     DEBUG0("MAX_HASHES = " << MAX_HASHES);
     states.clear();
     states.push_back(State2());	// 0 reserved for 'empty'
     states.reserve(MAX_STATES);
     hashTable.clear();
-    //hashTable.resize(PRIME_LIST[0]);
-    //hashTable.resize(98317);
     hashTable.resize(MAX_HASHES);
 
     minMinTotalMoves = 0;
@@ -161,7 +162,6 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	DEBUG0("bestIndex: " << bestIndex);
 	if (bestIndex == 0)
 	    break;
-	//State2& best = states[bestIndex];
 	DEBUG0("best: " << states[bestIndex]);
 	states[bestIndex].isOpen = false;
 	--numOpen;
