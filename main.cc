@@ -50,23 +50,24 @@ string isotime() {
     return string(timestr);
 }
 
-void writestats() {
-    ofstream statsStream("statistics-"ALGORITHM_NAME, ios::app);
-    statsStream << levelName
-		<< " with " ALGORITHM_NAME << " final statistics:\n";
-    Statistics::print(statsStream);
-    if (Statistics::solutionLength != 0) {
-	statsStream << " Solution length:  " << Statistics::solutionLength << endl;
-    } else {
-	if (Statistics::lowerBound != 0)
-	    statsStream << " Lower bound:      " << Statistics::lowerBound << endl;
-	if (Statistics::upperBound != 0)
-	    statsStream << " Upper bound:      " << Statistics::upperBound << endl;
+extern "C" {
+    void writestats() {
+	ofstream statsStream("statistics-"ALGORITHM_NAME, ios::app);
+	statsStream << levelName
+		    << " with " ALGORITHM_NAME << " final statistics:\n";
+	Statistics::print(statsStream);
+	if (Statistics::solutionLength != 0) {
+	    statsStream << " Solution length:  " << Statistics::solutionLength << endl;
+	} else {
+	    if (Statistics::lowerBound != 0)
+		statsStream << " Lower bound:      " << Statistics::lowerBound << endl;
+	    if (Statistics::upperBound != 0)
+		statsStream << " Upper bound:      " << Statistics::upperBound << endl;
+	}
     }
-}
-
-void signalhandler(int) {
-    exit(1);
+    void signalhandler(int) {
+	exit(1);
+    }
 }
 
 int main(int argc, char* argv[]) {
