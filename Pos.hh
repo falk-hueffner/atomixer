@@ -46,6 +46,7 @@ public:
     bool operator==(Pos other) const { return p == other.p; }
     bool operator!=(Pos other) const { return p != other.p; }
     bool operator<(Pos other) const { return p < other.p; }
+    bool operator<=(Pos other) const { return p <= other.p; }
     Pos& operator+=(Dir dir) { p += dir; return *this; }
     Pos& operator++() { ++p; return *this; }
     Pos operator+(Dir dir) const { return Pos(p + dir); }

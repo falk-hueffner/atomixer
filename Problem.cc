@@ -36,6 +36,7 @@ bool Problem::myIsBlock[NUM_FIELDS];
 Pos Problem::myStartPositions[NUM_ATOMS];
 Pos Problem::myGoalPositions[NUM_ATOMS];
 int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
+int Problem::goalNr;
 Atom Problem::atoms[NUM_ATOMS];
 #ifdef DO_REVERSE_SEARCH
 HashTable<RevState> Problem::_revStates;
@@ -88,6 +89,7 @@ void Problem::setLevel(const Level& level) {
 }
 
 void Problem::setGoal(const Level& level, int goalPosNr) {
+    goalNr = goalPosNr;
     Pos d = level.goalPos(goalPosNr);
     int dx = d.x(), dy = d.y();
     typedef multimap<Atom, Pos> AtomMap;

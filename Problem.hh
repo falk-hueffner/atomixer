@@ -52,6 +52,8 @@ public:
     static const HashTable<RevState>& revStates() { return _revStates; }
 #endif
 
+    static int goalNr;
+
 private:
     static void calcDists(int dists[NUM_FIELDS], Pos goal);
 #ifdef DO_REVERSE_SEARCH

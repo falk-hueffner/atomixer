@@ -23,8 +23,8 @@
 #define SIZE_HH
 
 // these are hardcoded for speed and simplicity
-//const int XSIZE = 16, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
-const int XSIZE = 18, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
+const int XSIZE = 16, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
+//const int XSIZE = 18, YSIZE = 15, NUM_FIELDS = XSIZE * YSIZE;
 
 const int NUM_UNIQUE = @unique@;
 const int NUM_PAIRED = @paired@;	// note *paired* not *pairs*

@@ -1,6 +1,6 @@
 #! /bin/sh
 
-timelimit=10
+timelimit=1
 
 exec 6>batch.$$.log
 
