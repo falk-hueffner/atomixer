@@ -112,8 +112,9 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 
     for (int i = 0; i < NUM_ATOMS; ++i)
 	calcDists(goalDists[i], myGoalPositions[i]);
-
+#if 0
     calcCloseStates();
+#endif
 }
 
 /*
