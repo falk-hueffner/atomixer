@@ -179,6 +179,20 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	vector<Move> moves = states[bestIndex].moves();
 	for (vector<Move>::const_iterator m = moves.begin();
 	     m != moves.end(); ++m) {
+	    ++totalNodesGenerated;
+	    if ((++nodesGenerated & 0xfffff) == 0) // % is extremely slow on int64_t
+		cout << "best: " << states[bestIndex] << endl
+		     << " Nodes: " << nodesGenerated
+		     << " nodes/second: "
+		     << (int64_t) (double(nodesGenerated) / timer.seconds())
+		     << "\n  open: " << numOpen
+		     << "\nstates: " << states.size()
+		     << " \t(" << (states.size() * sizeof(State2)) / 1000000
+		     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
+		     << "M)\nhashes: " << hashTable.size()
+		     << " \t(" << (states.size() * sizeof(int)) / 1000000
+		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
+		     << "M)\n";
 	    DEBUG0("moving " << states[bestIndex] << ' ' << *m);
 	    State2 newState2(states[bestIndex], *m);
 	    newState2.predecessor = bestIndex;
@@ -240,20 +254,6 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 
 	    hashInsert(newState2);
 	    DEBUG0("inserted" << newState2);
-	    ++totalNodesGenerated;
-	    if ((++nodesGenerated & 0xfffff) == 0)
-		cout << "best: " << states[bestIndex] << endl
-		     << " Nodes: " << nodesGenerated
-		     << " nodes/second: "
-		     << (int64_t) (double(nodesGenerated) / timer.seconds())
-		     << "\n  open: " << numOpen
-		     << "\nstates: " << states.size()
-		     << " \t(" << (states.size() * sizeof(State2)) / 1000000
-		     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
-		     << "M)\nhashes: " << hashTable.size()
-		     << " \t(" << (states.size() * sizeof(int)) / 1000000
-		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
-		     << "M)\n";
 	}
     }
 
