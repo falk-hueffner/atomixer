@@ -140,9 +140,7 @@ static bool dfs() {
     DEBUG0(spaces(moves) << "dfs: moves =  " << moves << " state = " << state);
     if (state.minMovesLeft() == 0)
 	return true;		// not true for all heuristics, but for this one
-
-    int minTotalMoves = moves + state.minMovesLeft();
-    if (minTotalMoves > maxMoves)
+    if (moves + state.minMovesLeft() > maxMoves)
 	return false;
 
     if (nodesGenerated - lastOutput > 2000000) {
