@@ -52,11 +52,11 @@ Board::Board(map<string, string> lines, string key, int len) {
 	    }
 	}
     }
-    for (int x = 0; x < Board::XSIZE; ++x) {
+    for (int x = 0; x < XSIZE; ++x) {
 	floodFill(x, 0);
 	floodFill(x, YSIZE - 1);
     }
-    for (int y = 0; y < Board::YSIZE; ++y) {
+    for (int y = 0; y < YSIZE; ++y) {
 	floodFill(0, y);
 	floodFill(XSIZE - 1, y);
     }
@@ -78,16 +78,16 @@ void Board::floodFill(int x, int y) {
 
 ostream& operator<<(ostream& out, const Board& board) {
         out << "  ";
-    for (int i = 0; i < Board::XSIZE; ++i)
+    for (int i = 0; i < XSIZE; ++i)
 	out << "   " << char(i + 'A');
     out << "\n   +";
-    for (int i = 0; i < Board::XSIZE; ++i)
+    for (int i = 0; i < XSIZE; ++i)
 	out << "---+";
     out << endl;
-    for (int y = 0; y < Board::YSIZE; ++y) {
+    for (int y = 0; y < YSIZE; ++y) {
 	string sublines[3];
 	bool allBlock = true;
-	for (int x = 0; x < Board::XSIZE; ++x) {
+	for (int x = 0; x < XSIZE; ++x) {
 	    if (!board.field(x, y).isBlock())
 		allBlock = false;
 	    vector<string> atomLines = board.field(x, y).toAscii();
@@ -104,7 +104,7 @@ ostream& operator<<(ostream& out, const Board& board) {
 	    }
 
 	    out << "   +";
-	    for (int i = 0; i < Board::XSIZE; ++i)
+	    for (int i = 0; i < XSIZE; ++i)
 		out << "---+";
 	    out << endl;
 	}

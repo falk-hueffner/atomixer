@@ -45,13 +45,13 @@ Level::Level(istream& in) {
 }
 
 void Level::findGoalPositions() {
-    for (int dy = 0; dy < Board::YSIZE; ++dy) {
-	for (int dx = 0; dx < Board::XSIZE; ++dx) {
+    for (int dy = 0; dy < YSIZE; ++dy) {
+	for (int dx = 0; dx < XSIZE; ++dx) {
 	    bool ok = true;
-	    for (int y = 0; y < Board::YSIZE; ++y) {
-		for (int x = 0; x < Board::XSIZE; ++x) {
+	    for (int y = 0; y < YSIZE; ++y) {
+		for (int x = 0; x < XSIZE; ++x) {
 		    if (goal().field(x, y).isAtom()
-			&& (x + dx >= Board::XSIZE || y + dy >= Board::YSIZE
+			&& (x + dx >= XSIZE || y + dy >= YSIZE
 			    || startBoard().field(x + dx, y + dy).isBlock()))
 			ok = false;
 		}
@@ -65,8 +65,8 @@ void Level::findGoalPositions() {
 void Level::printStats() const {
     map<Atom, int> atomCounts;
     int numAtoms = 0;
-    for (int y = 0; y < Board::YSIZE; ++y) {
-	for (int x = 0; x < Board::XSIZE; ++x) {
+    for (int y = 0; y < YSIZE; ++y) {
+	for (int x = 0; x < XSIZE; ++x) {
 	    if (startBoard().field(x, y).isAtom()) {
 		++atomCounts[startBoard().field(x, y)];
 		++numAtoms;
@@ -97,8 +97,4 @@ void Level::printStats() const {
 
 ostream& operator<<(ostream& out, const Level& level) {
     return out << level.goal() << level.startBoard();
-}
-
-ostream& operator<<(ostream& out, const Level::Pos& pos) {
-    return out << '(' << pos.x << ", " << pos.y << ')';
 }

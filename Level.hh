@@ -26,18 +26,12 @@
 #include <vector>
 
 #include "Board.hh"
+#include "Pos.hh"
 
 using namespace std;
 
 class Level {
 public:
-    struct Pos {
-	Pos() { }		// leave uninitialized
-	Pos(int nx, int ny) : x(nx), y(ny) { }
-
-	int x, y;
-    };
-
     Level(istream& in);
 
     const Board& startBoard() const { return myStartBoard; }
@@ -53,6 +47,5 @@ private:
 };
 
 ostream& operator<<(ostream& out, const Level& level);
-ostream& operator<<(ostream& out, const Level::Pos& pos);
 
 #endif
