@@ -90,7 +90,7 @@ public:
 	while (true) {
 	    if (hashTable[hash] == 0) {
 		elements.push_back(element);
-		if (elements.size() * loadFactor > hashTable.size())
+		if (elements.size() * loadFactor > hashTable.size() + 100)
 		    rehash();
 		hashTable[hash] = elements.size() - 1;
 		return;
@@ -105,7 +105,7 @@ public:
 	while (true) {
 	    if (hashTable[hash] == 0) {
 		elements.push_back(element);
-		if (elements.size() * loadFactor > hashTable.size())
+		if (elements.size() * loadFactor > hashTable.size() + 100)
 		    rehash();
 		hashTable[hash] = elements.size() - 1;
 		return;
@@ -125,7 +125,7 @@ public:
 	while (true) {
 	    if (hashTable[hash] == 0) {
 		elements.push_back(element);
-		if (elements.size() * loadFactor > hashTable.size())
+		if (elements.size() * loadFactor > hashTable.size() + 100)
 		    rehash();
 		hashTable[hash] = elements.size() - 1;
 		return;
