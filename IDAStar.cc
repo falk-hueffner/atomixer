@@ -49,6 +49,7 @@
 #include "Dir.hh"
 #include "HashTable.hh"
 #include "IDAStar.hh"
+#include "IDAStarState.hh"
 #include "Problem.hh"
 #include "State.hh"
 #include "Statistics.hh"
@@ -83,27 +84,19 @@ static bool doAddBits = true;
 
 // global variables to describe current search state
 static int maxMoves;
-static int moves;
-bool isBlocking[NUM_FIELDS]; // FIXME try whether char is faster
-//static IDAStarState state;
+static IDAStarState state;
 static deque<Move> solution;
 static Timer timer;
 
-static bool dfs(Move lastMove, const State& state, int minMovesLeft);
+static bool dfs(const Move& lastMove);
+
 deque<Move> IDAStar(int maxDist) {
     DEBUG0("IDAStar" << maxDist);
-    moves = 0;
     ++Statistics::statesGenerated;
-    State state = State(Problem::startPositions());
+    state = State(Problem::startPositions());
     solution.clear();
     if (state.minMovesLeft() > maxDist)
 	return solution;	// saves memory allocation and freeing
-
-    for (Pos pos = 0; pos != Pos::end(); ++pos)
-	isBlocking[pos.fieldNumber()] = Problem::isBlock(pos);
-    for (int i = 0; i < NUM_ATOMS; ++i)
-	isBlocking[state.atomPosition(i)] = true;
-
 
 #ifdef DO_CACHING
     if (Problem::goalNr != cacheGoalNr) {
@@ -138,13 +131,13 @@ deque<Move> IDAStar(int maxDist) {
     maxMoves = maxDist;
 
     Statistics::timer.start();
-    dfs(Move(), state, state.minMovesLeft());
+    dfs(Move());
     Statistics::timer.stop();
 
     return solution;
 }
 
-#if 0
+#if 1
 static string spaces(int n) {
     return string(n, ' ');
 }
@@ -166,39 +159,35 @@ static inline bool between(Pos p1, Pos p2, Dir dir, Pos pm) {
     return false;		// Compaq C++ just doesn't get it...
 }
 
-static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
-    DEBUG0(spaces(moves) << "dfs: moves =  " << moves << " state = " << state);
+static bool dfs(const Move& lastMove) {
+    DEBUG0(spaces(state.moves()) << "dfs: moves =  "
+	   << state.moves() << " state = " << state);
     // FIXME do this earlier
-    if (minMovesLeft == 0)
+    if (state.minMovesLeft() == 0)
 	return true;		// not true for all heuristics, but for this one
-    if (moves + minMovesLeft > maxMoves)
+    if (state.minTotalMoves() > maxMoves)
 	return false;
 
 #ifdef DO_CACHING
-    // We know HashTable::find() only uses State::operator==(), and nothing
-    // from IDAStarCacheState, so this cast works.
-    IDAStarCacheState* cachedState =
-	cachedStates.find(*reinterpret_cast<const IDAStarCacheState*>(&state));
-	//cachedStates.find(IDAStarCacheState(state.positions()));
-
+    IDAStarCacheState cacheState(state);
+    IDAStarCacheState* cachedState = cachedStates.find(cacheState);
     if (cachedState != NULL) {
 	DEBUG0("found" << state << " in cache");
-	if (cachedState->minMovesFromStart <= moves)
+	if (cachedState->minMovesFromStart <= state.moves())
 	    return false;
-	else if (cachedState->minMovesFromStart > moves)
-	    cachedState->minMovesFromStart = moves;
+	else if (cachedState->minMovesFromStart > state.moves())
+	    cachedState->minMovesFromStart = state.moves();
 
-	if (moves + cachedState->minMovesLeft > maxMoves)
+	if (state.moves() + cachedState->minMovesLeft > maxMoves)
 	    return false;
     }
 
     if (cachedStates.size() < cachedStates.capacity()
 #ifdef DO_STOCHASTIC_CACHING
-	&& double(rand()) / double(RAND_MAX)  <= CACHE_INSERT_PROBABILITY
+	&& double(rand()) / double(RAND_MAX) <= CACHE_INSERT_PROBABILITY
 #endif
 	)
-	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
-					      moves, minMovesLeft));
+	cachedStates.insert(cacheState);
 #endif
 
     if ((Statistics::statesExpanded & 0xfffff) == 0) {
@@ -211,7 +200,7 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 	     << " cached: " << numBitsSet
 	     << " / " << maxBitsSet
 #endif
-	     << " moves = " << moves
+	     << " moves = " << state.moves()
 	     << endl;
 	Statistics::print(cout);
     }
@@ -220,10 +209,10 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
     ++Statistics::statesExpanded;
 
     static const int MAX_BUCKET_SIZE = NUM_ATOMS * 4;
-    typedef pair<State, Move> Bucket;
-    Bucket bucket0[MAX_BUCKET_SIZE];
-    Bucket bucket1[MAX_BUCKET_SIZE];
-    Bucket bucket2[MAX_BUCKET_SIZE];
+    //typedef pair<State, Move> Bucket;
+    Move bucket0[MAX_BUCKET_SIZE];
+    Move bucket1[MAX_BUCKET_SIZE];
+    Move bucket2[MAX_BUCKET_SIZE];
     int bucket0size = 0, bucket1size = 0, bucket2size = 0;
 
     for (int atomNr = 0; atomNr < NUM_ATOMS; ++atomNr) {
@@ -233,132 +222,109 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 	    DEBUG0(spaces(moves) << "moving " << atomNr << " @ " << startPos
 		   << ' ' << dir);
 	    Pos pos;
-	    for (pos = startPos + dir; !isBlocking[pos.fieldNumber()]; pos += dir) { }
+	    for (pos = startPos + dir; !state.isBlocking(pos); pos += dir) { }
 	    Pos newPos = pos - dir;
-	    if (newPos != startPos) {
-		++Statistics::numChildren;
-		DEBUG0(spaces(moves) << "moves to " << newPos);
-		Move move(atomNr, startPos, newPos, dir);
+	    if (newPos == startPos)
+		continue;
+	    
+	    ++Statistics::numChildren;
+	    DEBUG0(spaces(moves) << "moves to " << newPos);
+	    Move move(atomNr, startPos, newPos, dir);
 #ifdef DO_MOVE_PRUNING
-		if (moves > 0) {
-		    if (atomNr == lastMove.atomNr() && dir == -lastMove.dir()) {
+	    if (state.moves() > 0) {
+		if (atomNr == lastMove.atomNr() && dir == -lastMove.dir()) {
+		    ++Statistics::numPruned;
+		    continue;
+		}
+		if (atomNr < lastMove.atomNr()) {
+		    // this is only allowed if the two moves are not independent.
+		    if (!(between(lastMove.pos1(), lastMove.pos2(),
+				  lastMove.dir(), newPos)
+			  || newPos + dir == lastMove.pos2()
+			  || between(startPos, newPos, dir, lastMove.pos1())
+			  || startPos == lastMove.pos2() + lastMove.dir())) {
 			++Statistics::numPruned;
 			continue;
 		    }
-		    if (atomNr < lastMove.atomNr()) {
-			// this is only allowed if the two moves are not independent.
-			if (!(between(lastMove.pos1(), lastMove.pos2(),
-				      lastMove.dir(), newPos)
-			      || newPos + dir == lastMove.pos2()
-			      || between(startPos, newPos, dir, lastMove.pos1())
-			      || startPos == lastMove.pos2() + lastMove.dir())) {
-			    ++Statistics::numPruned;
-			    continue;
-			}
-		    }
 		}
+	    }
 #endif
-		//unsigned char oldatoms[NUM_ATOMS];
-		//for (int i = 0; i < NUM_ATOMS; ++i)
-		//    oldatoms[i] = state.atomPosition(i);
-
-		//state.apply(move);
-
-		State newState(state, move);
-		++Statistics::statesGenerated;
-		++Statistics::statesGeneratedAtDepth[maxMoves];
+	    int oldMinMovesLeft = state.minMovesLeft();
+	    state.apply(move);
+	    ++Statistics::statesGenerated;
+	    ++Statistics::statesGeneratedAtDepth[maxMoves];
 
 #ifdef DO_PARTIAL
-		// ugh... 64 bit modulo is dog slow on i386...
-		uint64_t hash1 = newState.hash64_1() % stateBits.numBits();
-		uint64_t hash2 = newState.hash64_2() % stateBits.numBits();
-		DEBUG0(newState << " hashes to " << hash1 << " & " << hash2);
-		int bitsSet = stateBits.isSet(hash1) + stateBits.isSet(hash2);
-		if (bitsSet == 2) {
-		    DEBUG0(" bits already set");
-		    continue;
+	    // ugh... 64 bit modulo is dog slow on i386...
+	    uint64_t hash1 = newState.hash64_1() % stateBits.numBits();
+	    uint64_t hash2 = newState.hash64_2() % stateBits.numBits();
+	    DEBUG0(newState << " hashes to " << hash1 << " & " << hash2);
+	    int bitsSet = stateBits.isSet(hash1) + stateBits.isSet(hash2);
+	    if (bitsSet == 2) {
+		DEBUG0(" bits already set");
+		state.undo(move, oldMinMovesLeft);
+		continue;
+	    }
+	    if (doAddBits) {
+		stateBits.set(hash1);
+		stateBits.set(hash2);
+		numBitsSet += 2 - bitsSet;
+		if (numBitsSet > maxBitsSet) {
+		    DEBUG1(" Bit hash table full");
+		    doAddBits = false;
 		}
-		if (doAddBits) {
-		    stateBits.set(hash1);
-		    stateBits.set(hash2);
-		    numBitsSet += 2 - bitsSet;
-		    if (numBitsSet > maxBitsSet) {
-			DEBUG1(" Bit hash table full");
-			doAddBits = false;
-		    }
-		}
-
-	    //assert(stateBits.isSet(hash));
+	    }
 #endif
 
-		
-		int newMinMovesLeft = newState.minMovesLeft();
-
-		switch (newMinMovesLeft - minMovesLeft) {
+	    switch (state.minMovesLeft() - oldMinMovesLeft) {
 		case -1:
-		    bucket0[bucket0size++] = make_pair(newState, move);
+		    bucket0[bucket0size++] = move;
 		    break;
 		case 0:
-		    bucket1[bucket1size++] = make_pair(newState, move);
+		    bucket1[bucket1size++] = move;
 		    break;
 		case 1:
-		    bucket2[bucket2size++] = make_pair(newState, move);
+		    bucket2[bucket2size++] = move;
 		    break;
 		default:
-		    cerr << "Impossible: old minMovesLeft = " << minMovesLeft
-			 << ", new minMovesLeft = " << newMinMovesLeft << endl;
+		    cerr << "Impossible: old minMovesLeft = " << oldMinMovesLeft
+			 << ", new minMovesLeft = " << state.minMovesLeft() << endl;
 		    abort();
-		}
-
-		//state.undo(move, oldatoms);
 	    }
+
+	    state.undo(move, oldMinMovesLeft);
 	}
     }
 
     for (int i = 0; i < bucket0size; ++i) {
-	++moves;
-	const Move& move = bucket0[i].second;
-	isBlocking[move.pos1().fieldNumber()] = false;
-	isBlocking[move.pos2().fieldNumber()] = true;
-	
-	if (dfs(move, bucket0[i].first, minMovesLeft - 1)) {
+	int oldMinMovesLeft = state.minMovesLeft();
+	const Move& move = bucket0[i];
+	state.apply(move, oldMinMovesLeft - 1);	
+	if (dfs(move)) {
 	    solution.push_front(move);
 	    return true;
 	}
-	isBlocking[move.pos1().fieldNumber()] = true;
-	isBlocking[move.pos2().fieldNumber()] = false;
-	
-	--moves;
+	state.undo(move, oldMinMovesLeft);
     }
     for (int i = 0; i < bucket1size; ++i) {
-	++moves;
-	const Move& move = bucket1[i].second;
-	isBlocking[move.pos1().fieldNumber()] = false;
-	isBlocking[move.pos2().fieldNumber()] = true;
-	
-	if (dfs(move, bucket1[i].first, minMovesLeft)) {
+	int oldMinMovesLeft = state.minMovesLeft();
+	const Move& move = bucket1[i];
+	state.apply(move, oldMinMovesLeft);	
+	if (dfs(move)) {
 	    solution.push_front(move);
 	    return true;
 	}
-	isBlocking[move.pos1().fieldNumber()] = true;
-	isBlocking[move.pos2().fieldNumber()] = false;
-	
-	--moves;
+	state.undo(move, oldMinMovesLeft);
     }
     for (int i = 0; i < bucket2size; ++i) {
-	++moves;
-	const Move& move = bucket2[i].second;
-	isBlocking[move.pos1().fieldNumber()] = false;
-	isBlocking[move.pos2().fieldNumber()] = true;
-	
-	if (dfs(move, bucket2[i].first, minMovesLeft + 1)) {
+	int oldMinMovesLeft = state.minMovesLeft();
+	const Move& move = bucket2[i];
+	state.apply(move, oldMinMovesLeft + 1);
+	if (dfs(move)) {
 	    solution.push_front(move);
 	    return true;
 	}
-	isBlocking[move.pos1().fieldNumber()] = true;
-	isBlocking[move.pos2().fieldNumber()] = false;
-	
-	--moves;
+	state.undo(move, oldMinMovesLeft);
     }
 
 #ifdef DO_CACHING
@@ -367,8 +333,8 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 	&& double(rand()) / double(RAND_MAX)  <= CACHE_INSERT_PROBABILITY
 #endif
 	)
-	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
-					       moves, (maxMoves + 1) - moves));
+	cacheState.minMovesLeft = (maxMoves + 1) - state.moves();
+	cachedStates.insert(cacheState);
 #endif
 
     return false;

@@ -22,12 +22,12 @@
 #include "AStarState.hh"
 
 AStarState::AStarState(const State& state)
-    : State(state), predecessor(0), numMoves(0), isOpen(true) {
+    : CacheState(state), predecessor(0), numMoves(0), isOpen(true) {
     calcMinMovesLeft();
 }
 
 AStarState::AStarState(const AStarState& state, const Move& move)
-    : State(state, move) {
+    : CacheState(state, move) {
     numMoves = state.numMoves + 1;
     isOpen = true;
     calcMinMovesLeft();

@@ -5,6 +5,10 @@ Algorithms:
 * overestimating A* for upper bounds (WIDA* [Kor93])
 * Bidirectional search
 * Move pruning for backward search
+* Move pruning: each move must:
+  * move the same atom
+  * move an atom that hasn't been moved before
+  * or be dependend upon the previous move.
 
 Heuristic:
 * identical atoms: minimum cost matching?

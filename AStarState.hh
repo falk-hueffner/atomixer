@@ -24,9 +24,9 @@
 
 class Move;
 
-#include "State.hh"
+#include "CacheState.hh"
 
-class AStarState : public State {
+class AStarState : public CacheState {
     friend std::ostream& operator<<(std::ostream& out, const AStarState& state);
 public:
     AStarState() { }		// leave uninitialized
