@@ -252,7 +252,7 @@ deque<Move> aStar2(const State& startState, int nmaxMoves) {
 		DEBUG1("minTotalMoves of " << newState.minTotalMoves()
 		       << " smaller than previous minMinTotalMoves of "
 		       << minMinTotalMoves);
-		assert(0);
+		abort();
 	    }
 
 	    if (states.size() == MAX_STATES) {
