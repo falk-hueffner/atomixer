@@ -30,20 +30,7 @@
 // canonicallified.
 
 class CacheState : public State {
-public:
-    // leave uninitialized
-    CacheState() { }
-    CacheState(const State& state) : State(state) { canonicallify(); }
-    CacheState(const Pos positions[NUM_ATOMS]) : State(positions) { canonicallify(); }
-    CacheState(const unsigned char positions[NUM_ATOMS])
-	: State(positions) { canonicallify(); }
-    CacheState(const State& state, const Move& move)
-	: State(state, move)  { canonicallify(move.atomNr()); }
-    void apply(const Move& move) { State::apply(move); canonicallify(move.atomNr()); }
-
 private:
-    void undo(const Move& move); // not easily implementable
-
     // canonicallify the state: identical atoms are sorted by number. This
     // avoids storing logically identical states twice in the hash table.
     void canonicallify() {
@@ -80,6 +67,20 @@ private:
 		swap(atomPositions_[i - 1], atomPositions_[i]);
 	}
     }
+
+public:
+    // leave uninitialized
+    CacheState() { }
+    CacheState(const State& state) : State(state) { canonicallify(); }
+    CacheState(const Pos positions[NUM_ATOMS]) : State(positions) { canonicallify(); }
+    CacheState(const unsigned char positions[NUM_ATOMS])
+	: State(positions) { canonicallify(); }
+    CacheState(const State& state, const Move& move)
+	: State(state, move)  { canonicallify(move.atomNr()); }
+    void apply(const Move& move) { State::apply(move); canonicallify(move.atomNr()); }
+
+private:
+    void undo(const Move& move); // not easily implementable
 }
 #ifdef HAVE_ATTRIBUTE_PACKED
     __attribute__ ((packed))
