@@ -73,21 +73,27 @@ extern "C" {
     }
 }
 
+void usage() {
+    cout << "Usage: atomixer levelfile           solve level" << endl
+	 << "       atomixer --stats levelfile   print statistics" << endl;
+}
+
 int main(int argc, char* argv[]) {
     try {
-    assert(argc >= 2);
+    if (argc < 2 || argc > 3) {
+	usage();
+	return 1;
+    }
 
-    if (argc > 2) {		// info
-	cout << "Level                   |#A|#G|1x|2x|nx|\n"
-	        "------------------------+--+--+--+--+--+\n";
-	for (int i = 1; i < argc; ++i) {
-	    cout << argv[i] << '\t';
-	    ifstream levelStream(argv[i]);
+    if (argc == 3) {
+	if (string(argv[1]) == "--stats") {
+	    ifstream levelStream(argv[2]);
 	    assert(levelStream);
 	    Level level(levelStream);
-	    //cout << level;
 	    level.printStats();
-	    cout << endl;
+	} else {
+	    usage();
+	    return 1;
 	}
 
 	return 0;
