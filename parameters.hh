@@ -25,4 +25,9 @@
 // maximum amount of memory to be used
 static const unsigned int MEMORY = 40 * 1024 * 1024;
 
+// define if you're sure your OS returns fresh pages zeroed (like Linux, but
+// unlike Solaris)
+#undef MY_OS_ZEROES_LARGE_MEMORY_ALLOCATIONS
+//#define MY_OS_ZEROES_LARGE_MEMORY_ALLOCATIONS
+
 #endif
