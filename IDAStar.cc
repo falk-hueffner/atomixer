@@ -182,7 +182,7 @@ static bool dfs(const Move& lastMove) {
 	    return false;
     }
 
-    if (cachedStates.size() < cachedStates.capacity()
+    if (cachedStates.size() < cachedStates.capacity() - 10
 #ifdef DO_STOCHASTIC_CACHING
 	&& double(rand()) / double(RAND_MAX) <= CACHE_INSERT_PROBABILITY
 #endif
@@ -209,10 +209,6 @@ static bool dfs(const Move& lastMove) {
     ++Statistics::statesExpanded;
 
     static const int MAX_BUCKET_SIZE = NUM_ATOMS * 4;
-    //typedef pair<State, Move> Bucket;
-    //Move bucket0[MAX_BUCKET_SIZE];
-    //Move bucket1[MAX_BUCKET_SIZE];
-    //Move bucket2[MAX_BUCKET_SIZE];
     Move buckets[3][MAX_BUCKET_SIZE];
     int bucketsize[3] = { };
 
@@ -305,17 +301,125 @@ static bool dfs(const Move& lastMove) {
 	for (int i = 0; i < bucketsize[bucketNr]; ++i) {
 	    int oldMinMovesLeft = state.minMovesLeft();
 	    const Move& move = buckets[bucketNr][i];
+
+	    //////////////////
+	    bool mayMoveBak[NUM_ATOMS][4];
+	    for (int i = 0; i < NUM_ATOMS; ++i)
+		for (int j = 0; j < 4; ++j)
+		    mayMoveBak[i][j] = mayMove[i][j];
+
+	    struct Undo {
+		Undo() {}
+		Undo(int natomNr, int ndirNr, bool nval)
+		    : atomNr(natomNr), dirNr(ndirNr), val(nval) { }
+		int atomNr;
+		int dirNr;
+		bool val;
+	    };
+
+//	    Undo undos[NUM_ATOMS + 8];
+//	    int numUndos = 0;
+
+//			       cout << "  Do: " << (num) << " " << (dir) \
+//				    << " -> " << (val) << endl; \
+//
+//			       undos[numUndos++] = Undo(num, dir, mayMove[num][dir]); \
+	    
+#define CHANGE(num, dir, val) do { \
+			       mayMove[num][dir] = val; \
+			      } while (0)
+	    
+	    if (state.moves() > 0) {
+		if (move.atomNr() == lastMove.atomNr()) {
+		    for (int d = 0; d < 4; ++d)
+		    CHANGE(move.atomNr(), d, d != -move.dir());
+		    //for (int d = 0; d < 4; ++d)
+		    //CHANGE(move.atomNr(), d, true);
+		} else {
+		    //for (int d = 0; d < 4; ++d)
+		    //CHANGE(lastMove.atomNr(), d, false);
+		}
+	    }
+	    // wake up others
+	    int moveDirNo = noOfDir(move.dir());
+	    int mmoveDirNo = noOfOppositeDir(move.dir());
+	    Dir perpDir;
+	    int perpDirNr, mperpDirNr;
+	    if (move.dir() == UP || move.dir() == DOWN) {
+		perpDir = LEFT;
+		perpDirNr = 2;
+		mperpDirNr = 3;
+	    } else {
+		perpDir = UP;
+		perpDirNr = 0;
+		mperpDirNr = 1;
+	    }
+	    // case 1
+	    Pos pp;
+	    if (move.pos1() + move.dir() != move.pos2()) { // moved at least 2 fields
+		for (Pos p = move.pos1() + move.dir();
+		     p != move.pos2() - move.dir(); p += move.dir()) {
+		    if (state.isBlocking(p - perpDir)) {
+			for (pp = p + perpDir; !state.isBlocking(pp);
+			     pp += perpDir) { }
+			if (state.isAtom(pp))
+			    CHANGE(state.atomNr(pp), mperpDirNr, true);
+		    }
+		    if (state.isBlocking(p + perpDir)) {
+			Pos pp;
+			for (pp = p - perpDir; !state.isBlocking(pp);
+			     pp -= perpDir) { }
+			if (state.isAtom(pp))
+			    CHANGE(state.atomNr(pp), perpDirNr, true);
+		    }
+		}
+	    }
+	    // case 1 special case
+	    for (pp = move.pos1() - move.dir(); !state.isBlocking(pp);
+		 pp -= move.dir()) { }
+	    if (state.isAtom(pp))
+		CHANGE(state.atomNr(pp), moveDirNo, true);
+
+	    // case 2 & 3 
+	    for (pp = move.pos1() + perpDir; !state.isBlocking(pp);
+		 pp += perpDir) { }
+	    if (state.isAtom(pp))
+		CHANGE(state.atomNr(pp), mperpDirNr, true);
+	    for (pp = move.pos1() - perpDir; !state.isBlocking(pp);
+		 pp -= perpDir) { }
+	    if (state.isAtom(pp))
+		CHANGE(state.atomNr(pp), perpDirNr, true);
+	    // case 4
+	    if (state.isAtom(move.pos2() + move.dir()))
+		CHANGE(state.atomNr(move.pos2() + move.dir()), mmoveDirNo, true);
+
+	    //////////////////////
+
 	    state.apply(move, oldMinMovesLeft + bucketNr - 1);	
 	    if (dfs(move)) {
 		solution.push_front(move);
 		return true;
 	    }
 	    state.undo(move, oldMinMovesLeft);
+	    /*
+	    for (int i = 0; i < numUndos; ++i) {
+		DEBUG0("Undo: " << undos[i].atomNr << " "
+		       << undos[i].dirNr << " -> "
+		       << undos[i].val);
+		mayMove[undos[i].atomNr][undos[i].dirNr] = undos[i].val;
+	    }
+	    */
+	    for (int i = 0; i < NUM_ATOMS; ++i)
+		for (int j = 0; j < 4; ++j)
+		    mayMove[i][j] = mayMoveBak[i][j];
+	    //for (int i = 0; i < NUM_ATOMS; ++i)
+	    //for (int j = 0; j < 4; ++j)
+	    //assert(mayMoveBak[i][j] == mayMove[i][j]);
 	}
     }
 
 #ifdef DO_CACHING
-    if (cachedStates.size() < cachedStates.capacity()
+    if (cachedStates.size() < cachedStates.capacity() - 10
 #ifdef DO_STOCHASTIC_CACHING
 	&& double(rand()) / double(RAND_MAX)  <= CACHE_INSERT_PROBABILITY
 #endif

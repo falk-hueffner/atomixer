@@ -34,4 +34,22 @@ ostream& operator <<(ostream& out, Dir dir);
 
 static const Dir DIRS[4] = { UP, DOWN, LEFT, RIGHT };
 
+inline int noOfDir(Dir dir) {
+    switch(dir) {
+    case UP: return 0;
+    case DOWN: return 1;
+    case LEFT: return 2;
+    case RIGHT: return 3;
+    }
+}
+
+inline int noOfOppositeDir(Dir dir) {
+    switch(dir) {
+    case UP: return 1;
+    case DOWN: return 0;
+    case LEFT: return 3;
+    case RIGHT: return 2;
+    }
+}
+
 #endif
