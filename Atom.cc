@@ -37,6 +37,7 @@ const char Atom::idMap[][2] = {{'.', ' '},
 			       {'o', 'o'}, // "crystal"
 			       {'A', '-'},
 			       {'C', '|'},
+			       {'P', 'P'}, // for Adrien's levels, not in KAtomic
 			       {  0,   0}};
 
 const int Atom::coords[][2] = {{0, 1}, {0, 2}, {1, 2}, {2, 2},
