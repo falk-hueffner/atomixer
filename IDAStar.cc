@@ -19,23 +19,6 @@
   $Id$
 */
 
-#undef DO_PREHEATING
-//#define DO_PREHEATING 1
-
-//#undef DO_MOVE_PRUNING
-#define DO_MOVE_PRUNING 1
-
-//#undef DO_CACHING
-#define DO_CACHING 1
-
-#undef DO_PARTIAL
-//#define DO_PARTIAL 1
-
-#undef DO_STOCHASTIC_CACHING
-//#define DO_STOCHASTIC_CACHING 1
-
-#define CACHE_INSERT_PROBABILITY 0.1
-
 #include <assert.h>
 #include <stdlib.h>
 
@@ -75,14 +58,16 @@ static HashTable<IDAStarCacheState> cachedStates;
 #ifdef DO_PARTIAL
 static BitVector stateBits;
 static uint64_t numBitsSet;
-static const uint64_t maxBitsSet = (MEMORY * 8) / 8;
-static bool doAddBits = true;
+static const uint64_t maxBitsSet = (MEMORY * 8) / 16;
+static bool doAddBits;
 #endif
 
 // global variables to describe current search state
 static int maxMoves;
 static IDAStarState state;
+#ifdef DO_MAY_MOVE_PRUNING
 bool mayMove[NUM_ATOMS][4];
+#endif
 static deque<Move> solution;
 static Timer timer;
 
@@ -109,7 +94,7 @@ deque<Move> IDAStar(int maxDist) {
 #ifdef DO_PREHEATING
 	if (maxDist > 0) {
 	    DEBUG1("Pre-heating cache.");
-	    for (maxMoves = 0; maxMoves < maxDist; ++maxMoves) {
+	    for (maxMoves = 0; maxMoves < maxDist - 3; ++maxMoves) {
 		DEBUG1("Pre-heating with maxDist = " << maxMoves);
 		//dfs(Move(), state, state.minMovesLeft());
 		dfs(Move());
@@ -130,13 +115,17 @@ deque<Move> IDAStar(int maxDist) {
 
 #ifdef DO_PARTIAL
     stateBits.init(MEMORY * 8);
+    numBitsSet = 0;
+    doAddBits = true;
 #endif
 
     maxMoves = maxDist;
 
+#ifdef DO_MAY_MOVE_PRUNING
     for (int i = 0; i < NUM_ATOMS; ++i)
 	for (int j = 0; j < 4; ++j)
 	    mayMove[i][j] = true;
+#endif
 
     Statistics::timer.start();
     dfs(Move());
@@ -192,16 +181,19 @@ static bool dfs(const Move& lastMove) {
 	)
 	cachedStates.insert(cacheState);
 #endif
-
+    
     if ((Statistics::statesExpanded & 0xfffff) == 0) {
-	cout << state << " / " << maxMoves << endl
+	cout << ALGORITHM_NAME << endl << state << " / " << maxMoves << endl
 #ifdef DO_CACHING
-	     << " cached: " << cachedStates.size()
-	     << " / " << cachedStates.capacityLeft()
+	     << " cached: " << cachedStates.size() << " ("
+	     << double(cachedStates.size()) * 100.0
+	        / double(cachedStates.capacityLeft() + cachedStates.size())
+	     << "%)"
 #endif
 #ifdef DO_PARTIAL
 	     << " cached: " << numBitsSet
-	     << " / " << maxBitsSet
+	     << " (" << (double(numBitsSet) * 100.0) / double(maxBitsSet)
+	     << "%)"
 #endif
 	     << " moves = " << state.moves()
 	     << endl;
@@ -226,8 +218,10 @@ static bool dfs(const Move& lastMove) {
 	for (int dirNo = 0; dirNo < 4; ++dirNo) {
 	    Dir dir = DIRS[dirNo];
 
+#ifdef DO_MAY_MOVE_PRUNING
 	    if (!mayMove[atomNr][dirNo])
 		continue;
+#endif
 	    
 	    DEBUG0(spaces(moves) << "moving " << atomNr << " @ " << startPos
 		   << ' ' << dir);
@@ -242,15 +236,14 @@ static bool dfs(const Move& lastMove) {
 	    if (!state.isBlocking(startPos - dir))
 		continue;
 	    // Note different indention would be needed here
-	    for (newPos = startPos + dir; !state.isBlocking(newPos); newPos += dir) {
+	    for (newPos = startPos + dir; !state.isBlocking(newPos);
+		 newPos += dir) {
 #endif
-	    
 	    ++Statistics::numChildren;
 	    DEBUG0(spaces(moves) << "moves to " << newPos);
 	    Move move(atomNr, startPos, newPos, dir);
 #ifdef DO_MOVE_PRUNING
 	    if (state.moves() > 0) {
-#ifndef DO_BACKWARD_SEARCH
 		if (atomNr == lastMove.atomNr() && dir == -lastMove.dir()) {
 		    ++Statistics::numPruned;
 		    continue;
@@ -258,6 +251,7 @@ static bool dfs(const Move& lastMove) {
 		if (atomNr < lastMove.atomNr()) {
 		    // this is only allowed if the two moves are not
 		    // independent.
+#ifndef DO_BACKWARD_SEARCH
 		    if (!(between(lastMove.pos1(), lastMove.pos2(),
 				  lastMove.dir(), newPos)
 			  || newPos + dir == lastMove.pos2()
@@ -265,16 +259,7 @@ static bool dfs(const Move& lastMove) {
 			  || startPos == lastMove.pos2() + lastMove.dir())) {
 			++Statistics::numPruned;
 			continue;
-		    }
-		}
 #else // defined(DO_BACKWARD_SEARCH)
-		if (atomNr == lastMove.atomNr() && dir == -lastMove.dir()) {
-		    ++Statistics::numPruned;
-		    continue;
-		}
-		if (atomNr < lastMove.atomNr()) {
-		    // this is only allowed if the two moves are not
-		    // independent.
 		    if (!(between(lastMove.pos1(), lastMove.pos2(),
 				  lastMove.dir(), newPos)
 			  || startPos - dir == lastMove.pos2()
@@ -282,9 +267,9 @@ static bool dfs(const Move& lastMove) {
 			  || startPos == lastMove.pos1() - lastMove.dir())) {
 			++Statistics::numPruned;
 			continue;
+#endif // #ifndef DO_BACKWARD_SEARCH
 		    }
 		}
-#endif // #ifndef DO_BACKWARD_SEARCH
 	    }
 #endif // #ifdef DO_MOVE_PRUNING
 	    int oldMinMovesLeft = state.minMovesLeft();
@@ -302,24 +287,35 @@ static bool dfs(const Move& lastMove) {
 
 #ifdef DO_PARTIAL
 	    {
-	    // ugh... 64 bit modulo is dog slow on i386...
-	    uint64_t hash1 = state.hash64_1() % stateBits.numBits();
-	    uint64_t hash2 = state.hash64_2() % stateBits.numBits();
-	    DEBUG0(state << " hashes to " << hash1 << " & " << hash2);
-	    int bitsSet = stateBits.isSet(hash1) + stateBits.isSet(hash2);
-	    if (bitsSet == 2) {
-		DEBUG0(" bits already set");
-		goto skip;
-	    }
-	    if (doAddBits) {
-		stateBits.set(hash1);
-		stateBits.set(hash2);
-		numBitsSet += 2 - bitsSet;
-		if (numBitsSet > maxBitsSet) {
-		    DEBUG1(" Bit hash table full");
-		    doAddBits = false;
+		// ugh... 64 bit modulo is dog slow on i386...
+		uint64_t hash1 = (state.hash64_1() + state.moves())
+				% stateBits.numBits();
+		uint64_t hash2 = (state.hash64_2() + state.moves())
+				% stateBits.numBits();
+		DEBUG0(state << " hashes to " << hash1 << " & " << hash2);
+		int bitsSet = stateBits.isSet(hash1) + stateBits.isSet(hash2);
+		if (bitsSet == 2) {
+		    DEBUG0(" bits already set");
+		    goto skip;
 		}
-	    }
+
+		// perhaps it is the table with $g$ less by one?
+		uint64_t hash1a
+		    = hash1 == 0 ? stateBits.numBits() - 1 : hash1 - 1;
+		uint64_t hash2a
+		    = hash2 == 0 ? stateBits.numBits() - 1 : hash2 - 1;
+		if (stateBits.isSet(hash1a) && stateBits.isSet(hash2a))
+		    goto skip;
+
+		if (doAddBits) {
+		    stateBits.set(hash1);
+		    stateBits.set(hash2);
+		    numBitsSet += 2 - bitsSet;
+		    if (numBitsSet > maxBitsSet) {
+			DEBUG1(" Bit hash table full");
+			doAddBits = false;
+		    }
+		}
 	    }
 #endif
 	    bucketNr = state.minMovesLeft() - oldMinMovesLeft + 1;
@@ -342,36 +338,30 @@ static bool dfs(const Move& lastMove) {
 	    int oldMinMovesLeft = state.minMovesLeft();
 	    const Move& move = buckets[bucketNr][i];
 
-	    //////////////////
+#ifdef DO_MAY_MOVE_PRUNING
 	    bool mayMoveBak[NUM_ATOMS][4];
 	    for (int i = 0; i < NUM_ATOMS; ++i)
 		for (int j = 0; j < 4; ++j)
 		    mayMoveBak[i][j] = mayMove[i][j];
 
-	    struct Undo {
-		Undo() {}
-		Undo(int natomNr, int ndirNr, bool nval)
-		    : atomNr(natomNr), dirNr(ndirNr), val(nval) { }
-		int atomNr;
-		int dirNr;
-		bool val;
-	    };
-
-#define CHANGE(num, dir, val) do { \
-			       mayMove[num][dir] = val; \
-			      } while (0)
-	    
 	    if (state.moves() > 0) {
-		if (move.atomNr() == lastMove.atomNr()) {
-		    for (int d = 0; d < 4; ++d)
-			// FIXME disabled for now for backward search
-			;//CHANGE(move.atomNr(), d, d != -move.dir());
-		    //for (int d = 0; d < 4; ++d)
-		    //CHANGE(move.atomNr(), d, true);
-		} else {
-		    //for (int d = 0; d < 4; ++d)
-		    //CHANGE(lastMove.atomNr(), d, false);
+		for (int d = 0; d < 4; ++d) {
+		    mayMove[move.atomNr()][d]
+			= (d != noOfDir(Dir(-move.dir())));
 		}
+#if 0 // buggy
+		if (move.atomNr() != lastMove.atomNr()) {
+		    if (!(between(lastMove.pos1(), lastMove.pos2(),
+				  lastMove.dir(), move.pos2())
+			  || move.pos2() + move.dir() == lastMove.pos2()
+			  || between(move.pos1(), move.pos2(), move.dir(),
+				     lastMove.pos1())
+			  || move.pos1() == lastMove.pos2() + lastMove.dir())){
+			for (int d = 0; d < 4; ++d)
+			    mayMove[lastMove.atomNr()][d] =  false;
+		    }
+		}
+#endif
 	    }
 	    // wake up others
 	    int moveDirNo = noOfDir(move.dir());
@@ -389,21 +379,22 @@ static bool dfs(const Move& lastMove) {
 	    }
 	    // case 1
 	    Pos pp;
-	    if (move.pos1() + move.dir() != move.pos2()) { // moved at least 2 fields
+	    // moved at least 2 fields?
+	    if (move.pos1() + move.dir() != move.pos2()) {
 		for (Pos p = move.pos1() + move.dir();
-		     p != move.pos2() - move.dir(); p += move.dir()) {
-		    if (state.isBlocking(p - perpDir)) {
+		     //p != move.pos2() - move.dir(); p += move.dir()) {
+		     p != move.pos2(); p += move.dir()) {
+		    if (1 || state.isBlocking(p - perpDir)) {
 			for (pp = p + perpDir; !state.isBlocking(pp);
 			     pp += perpDir) { }
 			if (state.isAtom(pp))
-			    CHANGE(state.atomNr(pp), mperpDirNr, true);
+			    mayMove[state.atomNr(pp)][mperpDirNr] = true;
 		    }
-		    if (state.isBlocking(p + perpDir)) {
-			Pos pp;
+		    if (1 || state.isBlocking(p + perpDir)) {
 			for (pp = p - perpDir; !state.isBlocking(pp);
 			     pp -= perpDir) { }
 			if (state.isAtom(pp))
-			    CHANGE(state.atomNr(pp), perpDirNr, true);
+			    mayMove[state.atomNr(pp)][perpDirNr] = true;
 		    }
 		}
 	    }
@@ -411,43 +402,33 @@ static bool dfs(const Move& lastMove) {
 	    for (pp = move.pos1() - move.dir(); !state.isBlocking(pp);
 		 pp -= move.dir()) { }
 	    if (state.isAtom(pp))
-		CHANGE(state.atomNr(pp), moveDirNo, true);
+		mayMove[state.atomNr(pp)][moveDirNo] = true;
 
 	    // case 2 & 3 
 	    for (pp = move.pos1() + perpDir; !state.isBlocking(pp);
 		 pp += perpDir) { }
 	    if (state.isAtom(pp))
-		CHANGE(state.atomNr(pp), mperpDirNr, true);
+		mayMove[state.atomNr(pp)][mperpDirNr] = true;
 	    for (pp = move.pos1() - perpDir; !state.isBlocking(pp);
 		 pp -= perpDir) { }
 	    if (state.isAtom(pp))
-		CHANGE(state.atomNr(pp), perpDirNr, true);
+		mayMove[state.atomNr(pp)][perpDirNr] = true;
 	    // case 4
 	    if (state.isAtom(move.pos2() + move.dir()))
-		CHANGE(state.atomNr(move.pos2() + move.dir()), mmoveDirNo, true);
-
-	    //////////////////////
-
+		mayMove[state.atomNr(move.pos2() + move.dir())][mmoveDirNo]
+		    = true;
+#endif
 	    state.apply(move, oldMinMovesLeft + bucketNr - 1);	
 	    if (dfs(move)) {
 		solution.push_front(move);
 		return true;
 	    }
 	    state.undo(move, oldMinMovesLeft);
-	    /*
-	    for (int i = 0; i < numUndos; ++i) {
-		DEBUG0("Undo: " << undos[i].atomNr << " "
-		       << undos[i].dirNr << " -> "
-		       << undos[i].val);
-		mayMove[undos[i].atomNr][undos[i].dirNr] = undos[i].val;
-	    }
-	    */
+#ifdef DO_MAY_MOVE_PRUNING
 	    for (int i = 0; i < NUM_ATOMS; ++i)
 		for (int j = 0; j < 4; ++j)
 		    mayMove[i][j] = mayMoveBak[i][j];
-	    //for (int i = 0; i < NUM_ATOMS; ++i)
-	    //for (int j = 0; j < 4; ++j)
-	    //assert(mayMoveBak[i][j] == mayMove[i][j]);
+#endif
 #ifdef DO_BACKWARD_SEARCH
 	}
 #endif
