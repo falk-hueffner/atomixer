@@ -34,6 +34,7 @@ public:
 
     bool isEmpty() const { return myID == 0; }
     bool isBlock() const { return myID == 1; }
+    bool isAtom()  const { return myID >  1; }
 
     vector<string> toAscii() const;
 

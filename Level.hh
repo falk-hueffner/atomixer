@@ -35,6 +35,8 @@ public:
     const Board& startBoard() const { return myStartBoard; }
     const Board& goal() const { return myGoal; }
 
+    void printStats() const;
+
 private:
     Board myStartBoard, myGoal;
 };
