@@ -191,6 +191,22 @@ size_t State::hash() const {
     return result;
 }
 
+// "one-at-a-time hash"
+size_t State::hash2() const {
+    size_t hash = 0;
+    for (int i = 0; i < NUM_ATOMS; ++i) {
+	hash += atomPositions_[i];
+	hash += (hash << 10);
+	hash ^= (hash >> 6);
+    }
+    
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+
+    return hash;
+}
+
 uint64_t State::hash64_1() const {
     /*
     uint64_t perl = 0;

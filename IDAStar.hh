@@ -41,8 +41,11 @@
 #undef DO_CACHING
 //#define DO_CACHING 1
 
-//#undef DO_PARTIAL
-#define DO_PARTIAL 1
+#undef DO_PARTIAL
+//#define DO_PARTIAL 1
+
+//#undef DO_COMPACTION
+#define DO_COMPACTION 1
 
 #undef DO_STOCHASTIC_CACHING
 //#define DO_STOCHASTIC_CACHING 1
@@ -62,11 +65,14 @@ static const char* ALGORITHM_NAME = "idastar"
 #ifdef DO_MAY_MOVE_PRUNING
   "-maymoveprune"
 #endif
-#if !defined(DO_CACHING) && !defined(DO_PARTIAL)
+#if !defined(DO_CACHING) && !defined(DO_PARTIAL) && !defined(DO_COMPACTION)
   "-nocaching"
 #endif
 #ifdef DO_PARTIAL
   "-partial"
+#endif
+#ifdef DO_COMPACTION
+  "-compaction"
 #endif
 #ifdef DO_STOCHASTIC_CACHING
   "-stochastic"
