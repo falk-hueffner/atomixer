@@ -106,11 +106,9 @@ void Problem::setLevel(const Level& level) {
     assert(numUnique == NUM_UNIQUE);
     assert(numPaired == NUM_PAIRED);
     assert(numMulti == NUM_MULTI);
-    cout << "returning from " << __PRETTY_FUNCTION__ << endl;
 }
 
 void Problem::setGoal(const Level& level, int goalPosNr) {
-    cout << "Problem::setGoal\n";
     goalNr = goalPosNr;
     Pos d = level.goalPos(goalPosNr);
     int dx = d.x(), dy = d.y();
