@@ -26,25 +26,23 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
+#include <iosfwd>
+
 class Timer {
 public:
     Timer() { reset(); }
 
-    void reset() {
-	rusage usage;
-	getrusage(RUSAGE_SELF, &usage);
-	_start = usage.ru_utime;
-    }
-
-    double seconds() const {
-	rusage usage;
-	getrusage(RUSAGE_SELF, &usage);
-	return usage.ru_utime.tv_sec - _start.tv_sec
-	    + (usage.ru_utime.tv_usec - _start.tv_usec) / 1000000.0;
-    }
+    void reset();
+    void start();
+    void stop();
+    double seconds() const;
 
 private:
-    struct timeval _start;
+    bool running_;
+    struct timeval time_;
+    struct timeval start_;
 };
+
+std::ostream& operator<<(std::ostream& out, const Timer& timer);
 
 #endif
