@@ -29,7 +29,7 @@ return 0;
 
 if test x"$ac_cv_prog_gxx" = xyes; then
    #if test "$CXXFLAGS" = "-g O2"; then
-     CXXFLAGS="-O6 -g -W -Wall -Winline -Wno-sign-compare -funroll-all-loops"
+     CXXFLAGS="-O6 -g -W -Wall -Wno-sign-compare -funroll-all-loops"
    #fi
    if test x"$profile" = xyes; then
      CXXFLAGS="$CXXFLAGS -pg"
