@@ -20,6 +20,7 @@
 */
 
 #include <assert.h>
+#include <stdlib.h>
 
 #include <iostream>
 #include <fstream>
@@ -28,6 +29,7 @@
 #include "Problem.hh"
 #include "State.hh"
 #include "AStar.hh"
+//#include "Search.hh"
 
 using namespace std;
 
@@ -55,7 +57,52 @@ int main(int argc, char* argv[]) {
     State start(Problem::startPositions());
 
     cout << level.startBoard();
-    for (int maxMoves = 1; ; ++maxMoves) {
+
+    string levelName = string(argv[1]);
+    while (levelName.find('/') != string::npos)
+	levelName = levelName.substr(levelName.find('/') + 1);
+    cout << levelName << endl;
+
+    int knownLowerBound = 0;
+    
+    ifstream statStream("stats");
+    assert(statStream);
+    string line;
+    while (getline(statStream, line)) {
+	if (line.find(levelName) == 0) {
+	    cout << line << endl;
+	    for (int i = 0; i < 8; ++i)
+		line = line.substr(line.find('|') + 1);
+	    cout << line << endl;
+	    line = line.substr(0, line.find('|'));
+	    cout << line << endl;
+	    knownLowerBound = atoi(line.c_str());
+	    if (knownLowerBound != 0)
+		cout << "Known lower bound: " << knownLowerBound << endl;
+	}
+    }
+
+    
+    /*
+    for (int goalNr = 0; goalNr < level.numGoals(); ++goalNr) {
+	cout << "-------------------- "
+	     << level.goalPos(goalNr)
+	     << " --------------------\n";
+	Problem::setGoal(level, goalNr);
+	deque<Move> moves = search(start);
+	if (moves.size() > 0) {
+	    cout << "Solution in " << moves.size() << " moves.\n";
+	    for (deque<Move>::const_iterator m = moves.begin();
+		 m != moves.end(); ++m) {
+		cout << *m << endl;
+	    }
+	    
+	    return 0;
+	}
+    }
+    */
+    
+    for (int maxMoves = knownLowerBound; ; ++maxMoves) {
 	cout << "******************** " << maxMoves << " ********************\n";
 	for (int goalNr = 0; goalNr < level.numGoals(); ++goalNr) {
 	    cout << "-------------------- "
@@ -69,9 +116,18 @@ int main(int argc, char* argv[]) {
 		     m != moves.end(); ++m) {
 		    cout << *m << endl;
 		}
+		ofstream boundStream("bounds", ios::app);
+		boundStream << levelName << ": = " << maxMoves << endl;
 
 		return 0;
 	    }
+	}
+	// ok, now we know we need at least maxMoves + 1 moves
+	if (maxMoves + 1 > knownLowerBound) {
+	    ofstream boundStream("bounds", ios::app);
+	    boundStream << levelName << ": >= " << maxMoves + 1 << endl;
+	    cout << "New lower bound found for " << levelName
+		 << ": " << maxMoves + 1 << endl;
 	}
     }
 }
