@@ -31,6 +31,7 @@ typedef long long int64_t;
 #include <iostream>
 #include <vector>
 
+#include "AStar2.hh"
 #include "State2.hh"
 #include "Timer.hh"
 
@@ -39,9 +40,9 @@ typedef long long int64_t;
 
 using namespace std;
 
-static const double LOAD_FACTOR = 1.4;
+extern int64_t totalNodesGenerated;
 
-static const unsigned int MEMORY = 320 * 1024 * 1024;
+static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
     (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(State2)));
@@ -161,11 +162,9 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
     searchIndex = firstOpen;
     numOpen = 0;
     
-    static int64_t totalNodes = 0;
-    
     DEBUG1("start state: " << start);
     hashInsert(start);
-    ++totalNodes;
+    ++totalNodesGenerated;
 
     timer.reset();
     while (true) {
@@ -241,7 +240,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 
 	    hashInsert(newState2);
 	    DEBUG0("inserted" << newState2);
-	    ++totalNodes;
+	    ++totalNodesGenerated;
 	    if ((++nodesGenerated & 0xfffff) == 0)
 		cout << "best: " << states[bestIndex] << endl
 		     << " Nodes: " << nodesGenerated
