@@ -24,6 +24,7 @@
 #include "Move.hh"
 
 ostream& operator <<(ostream& out, const Move& move) {
-    return out << move.p1() << move.dir();
+    return out << move.atomNr() << '@' <<  move.pos1() << move.dir()
+	       << "->" << move.pos2();
 }
 

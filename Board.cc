@@ -62,6 +62,17 @@ Board::Board(map<string, string> lines, string key, int len) {
     }
 }
 
+Pos Board::find(const Atom& atom) const {
+    for (int x = 0; x < XSIZE; ++x) {
+	for (int y = 0; y < YSIZE; ++y) {
+	    if (field(x, y) == atom)
+		return Pos(x, y);
+	}
+    }
+
+    return Pos::null();
+}
+
 void Board::floodFill(int x, int y) {
     if (!field(x, y).isEmpty())
 	return;

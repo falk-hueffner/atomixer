@@ -24,6 +24,7 @@
 
 #include <iosfwd>
 
+#include "Dir.hh"
 #include "Size.hh"
 
 using namespace std;
@@ -31,11 +32,21 @@ using namespace std;
 class Pos {
 public:
     Pos() { }		// leave uninitialized
+    Pos(int np) : p(np) { }
     Pos(int x, int y) : p(y * XSIZE + x) { }
 
     int x() const { return p % XSIZE; }
     int y() const { return p / XSIZE; }
     int fieldNumber() const { return p; }
+
+    static Pos null() { return Pos(-1); }
+    bool ok() const { return p != -1; }
+
+    bool operator==(Pos other) const { return p == other.p; }
+    bool operator!=(Pos other) const { return p != other.p; }
+    bool operator<(Pos other) const { return p < other.p; }
+    Pos& operator+=(Dir dir) { p += dir; return *this; }
+    Pos operator-(Dir dir) const { return Pos(p - dir); }
 
 private:
     int p;

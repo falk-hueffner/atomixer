@@ -87,6 +87,16 @@ bool Atom::operator<(const Atom& other) const {
     return false;
 }
 
+bool Atom::operator==(const Atom& other) const {
+    if (myID != other.myID)
+	return false;
+    for (int i = 0; i < NUM_DIRS; ++i)
+	if (myNumConnections[i] != other.myNumConnections[i])
+	    return false;
+
+    return true;
+}
+
 vector<string> Atom::toAscii() const {
     if (isBlock())
 	return vector<string>(3, "###");

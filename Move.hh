@@ -32,14 +32,17 @@ using namespace std;
 class Move {
 public:
     Move() { }			// leave uninitialized
-    Move(Pos np1, Pos np2, Dir ndir) : myP1(np1), myP2(np2), myDir(ndir) { }
+    Move(int natomNr, Pos np1, Pos np2, Dir ndir)
+	: myAtomNr(natomNr), myPos1(np1), myPos2(np2), myDir(ndir) { }
 
-    Pos p1() const { return myP1; }
-    Pos p2() const { return myP2; }
+    int atomNr() const { return myAtomNr; }
+    Pos pos1() const { return myPos1; }
+    Pos pos2() const { return myPos2; }
     Dir dir() const { return myDir; }
 
 private:
-    Pos myP1, myP2;
+    int myAtomNr;
+    Pos myPos1, myPos2;
     Dir myDir;
 };
 
