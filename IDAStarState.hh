@@ -54,7 +54,32 @@ public:
 	State::apply(move);
 	fields_[move.pos1().fieldNumber()] = EMPTY;
 	fields_[move.pos2().fieldNumber()] = move.atomNr();
-	calcMinMovesLeft();
+	if (move.atomNr() < NUM_UNIQUE) {
+	    minMovesLeft_ -= Problem::goalDist(move.atomNr(), move.pos1());
+	    minMovesLeft_ += Problem::goalDist(move.atomNr(), move.pos2());
+	/*
+	} else if (move.atomNr() < NUM_PAIRED) {
+	    int other;
+	    if ((move.atomNr() - PAIRED_START) % 2 == 0)
+		other = move.atomNr() + 1;
+	    else
+		other = move.atomNr() - 1;
+
+	    int oldturns1 = Problem::goalDist(move.atomNr(), move.pos1())
+		+ Problem::goalDist(other, atomPosition(other));
+	    int oldturns2 = Problem::goalDist(other, move.pos1())
+		+ Problem::goalDist(move.atomNr(), atomPosition(other));
+	    int newturns1 = Problem::goalDist(move.atomNr(), move.pos2())
+		+ Problem::goalDist(other, atomPosition(other));
+	    int newturns2 = Problem::goalDist(other, move.pos2())
+		+ Problem::goalDist(move.atomNr(), atomPosition(other));
+
+	    minMovesLeft_ -= min(oldturns1, oldturns2);
+	    minMovesLeft_ += min(newturns1, newturns2);
+	 */
+	 } else {
+	    calcMinMovesLeft();
+	}
 	++moves_;
     }
     void apply(const Move& move, int minMovesLeft) {
@@ -73,6 +98,8 @@ public:
     }
 
     bool isBlocking(Pos pos) const { return fields_[pos.fieldNumber()] != EMPTY; }
+    bool isAtom(Pos pos) const { return fields_[pos.fieldNumber()] < EMPTY; }
+    int atomNr(Pos pos) const { return fields_[pos.fieldNumber()]; }
 
 private:
     enum { EMPTY = NUM_ATOMS, BLOCK = NUM_ATOMS + 1 };
