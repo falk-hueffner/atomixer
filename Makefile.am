@@ -13,6 +13,8 @@ atomixer_SOURCES = \
 	Dir.hh		\
 	Level.cc	\
 	Level.hh	\
+	Move.cc		\
+	Move.hh		\
 	Pos.cc		\
 	Pos.hh		\
 	Size.hh		\
