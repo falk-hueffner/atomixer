@@ -26,62 +26,27 @@
 
 #include "State2.hh"
 
-//#define DEBUG(x) cout << x << endl;
 #define DEBUG0(x)
 #define DEBUG1(x) cout << x << endl;
 
 using namespace std;
 
-static const int NUM_PRIMES = 28;
-static const unsigned long PRIME_LIST[NUM_PRIMES] = {
-    53ul,         97ul,         193ul,       389ul,       769ul,
-    1543ul,       3079ul,       6151ul,      12289ul,     24593ul,
-    49157ul,      98317ul,      196613ul,    393241ul,    786433ul,
-    1572869ul,    3145739ul,    6291469ul,   12582917ul,  25165843ul,
-    50331653ul,   100663319ul,  201326611ul, 402653189ul, 805306457ul, 
-    1610612741ul, 3221225473ul, 4294967291ul
-};
+static const double LOAD_FACTOR = 1.4;
 
-unsigned long nextPrime(unsigned long n) {
-    const unsigned long* first = PRIME_LIST;
-    const unsigned long* last = PRIME_LIST + NUM_PRIMES;
-    const unsigned long* pos = lower_bound(first, last, n);
-    return pos == last ? *(last - 1) : *pos;
-}
-
-static const double LOAD_FACTOR = 1.5;
-
-static const unsigned int MEMORY = 900000000;
-static const unsigned int MAX_STATES = (unsigned int)(MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(State2)));
-static const unsigned int MAX_HASHES = (unsigned int)(MAX_STATES * LOAD_FACTOR);
+// static const unsigned int MEMORY = 900000000;
+static const unsigned int MEMORY = 350000000;
+static const unsigned int MAX_STATES = (unsigned int)
+    (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(State2)));
+static const unsigned int MAX_HASHES = (unsigned int)
+    (MAX_STATES * LOAD_FACTOR);
 
 vector<State2> states;
 vector<int> hashTable;
+
 int minMinTotalMoves;
 int firstOpen;
 int searchIndex;
 int numOpen;
-
-void rehash() {
-    int newSize = nextPrime(hashTable.size() + 1);
-    DEBUG1("resizing hash table from " << hashTable.size());
-    hashTable.clear();
-    DEBUG1("cleared ");
-    hashTable.resize(newSize);
-    DEBUG1(" to " << hashTable.size()
-	   << " (" << states.size() - 1 << " states)");
-    int conflicts = 0;
-    for (int i = 1; i < states.size(); ++i) {
-	unsigned int hash = states[i].hash() % hashTable.size();
-	while (hashTable[hash] != 0) {
-	    if (++hash >= hashTable.size())
-		hash = 0;
-	    ++conflicts;
-	}
-	hashTable[hash] = i;
-    }
-    DEBUG1("rehashed, " << conflicts << " conflicts.");
-}
 
 void hashInsert(const State2& state) {
     DEBUG0("inserting " << state);
@@ -90,27 +55,11 @@ void hashInsert(const State2& state) {
     while (true) {
 	if (hashTable[hash] == 0) {
 	    DEBUG0(" hash = " << hash << " empty. Putting it there.");
-	    //try {
-		states.push_back(state);
-		++numOpen;
-		/*
-	    } catch (bad_alloc) {
-		// we're running low on memory, and STL tried to double the
-		// capacity or so.
-		DEBUG1("bad_alloc catched. Trying to grow just a bit.");
-		DEBUG1("old capacity: " << states.capacity());
-		states.reserve(states.capacity() + 20000000);
-		states.push_back(state);
-		DEBUG1("new capacity: " << states.capacity());
-	    }
-	    */
+	    states.push_back(state);
+	    ++numOpen;
 	    DEBUG0(" pushed " << state);
 	    hashTable[hash] = states.size() - 1;
-	    if (hashTable.size() < LOAD_FACTOR * states.size()) {
-		DEBUG1(" must rehash.");
-		rehash();
-	    }
-	    DEBUG0(" returning.");
+
 	    return;
 	} else {
 	    State2& oldState2 = states[hashTable[hash]];
@@ -318,11 +267,16 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 		continue;
 	    }
 	    if (newState2.minTotalMoves() < minMinTotalMoves) {
+		// This can't happen if the heuristic is admissible
 		DEBUG1("minTotalMoves of " << newState2.minTotalMoves()
 		       << " smaller than previous minMinTotalMoves of "
 		       << minMinTotalMoves);
-		minMinTotalMoves = newState2.minTotalMoves();
-		searchIndex = states.size() - 2;
+		assert(0);
+	    }
+
+	    if (states.size() == MAX_STATES) {
+		DEBUG1("State table full; giving up.");
+		return deque<Move>();
 	    }
 
 	    hashInsert(newState2);
@@ -331,7 +285,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	}
     }
 
-    DEBUG0("Queue empty; no solution possible.");
+    DEBUG1("Queue empty; no solution possible.");
 
     return deque<Move>();
 }
