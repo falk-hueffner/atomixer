@@ -32,8 +32,8 @@ typedef long long int64_t;
 #include <vector>
 
 #include "AStar2.hh"
-#include "State2.hh"
-#include "IDAStarState.hh"
+#include "AStarState.hh"
+#include "State.hh"
 #include "Timer.hh"
 
 #define DEBUG0(x) do { } while (0)
@@ -46,11 +46,11 @@ extern int64_t totalNodesGenerated;
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
-    (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(State2)));
+    (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(AStarState)));
 static const unsigned int MAX_HASHES = (unsigned int)
     (MAX_STATES * LOAD_FACTOR);
 
-vector<State2> states;
+vector<AStarState> states;
 vector<int> hashTable;
 deque<Move> solution;
 
@@ -68,7 +68,7 @@ static IDAStarState mrecState;
 static bool idastar();
 #endif
 
-void hashInsert(const State2& state) {
+void hashInsert(const AStarState& state) {
     DEBUG0("inserting " << state);
     unsigned int hash = state.hash() % hashTable.size();
     DEBUG0(" hash = " << hash);
@@ -82,15 +82,15 @@ void hashInsert(const State2& state) {
 
 	    return;
 	} else {
-	    State2& oldState2 = states[hashTable[hash]];
-	    DEBUG0(" hash = " << hash << ": " << oldState2 << " already there.");
-	    if (oldState2 == state) {
+	    AStarState& oldState = states[hashTable[hash]];
+	    DEBUG0(" hash = " << hash << ": " << oldState << " already there.");
+	    if (oldState == state) {
 		DEBUG0(" hash = " << hash << ": "
-		       << oldState2 << " equals new state.");
-		if (state.numMoves < oldState2.numMoves) {
+		       << oldState << " equals new state.");
+		if (state.numMoves < oldState.numMoves) {
 		    DEBUG0(" New way to this state is shorter.\n");
-		    oldState2.numMoves = state.numMoves;
-		    oldState2.isOpen = true;
+		    oldState.numMoves = state.numMoves;
+		    oldState.isOpen = true;
 		    ++numOpen;
 		    if (hashTable[hash] < firstOpen) {
 			firstOpen = hashTable[hash];
@@ -153,8 +153,11 @@ int findBest(int maxMoves) {
     }
 }
 
-deque<Move> aStar2(const State2& start, int nmaxMoves) {
+deque<Move> aStar2(const State& startState, int nmaxMoves) {
+    cout << "sizeof(AStarState) = " << sizeof(AStarState) << endl;
+    AStarState start = startState;
     maxMoves = nmaxMoves;
+    int64_t numExpanded = 0, numChildren = 0;
     nodesGenerated = 0;
     if (start.minTotalMoves() > maxMoves)
 	return deque<Move>();	// saves the allocations which can take quite some time
@@ -162,7 +165,7 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
     DEBUG0("MAX_STATES = " << MAX_STATES);
     DEBUG0("MAX_HASHES = " << MAX_HASHES);
     states.clear();
-    states.push_back(State2());	// 0 reserved for 'empty'
+    states.push_back(AStarState());	// 0 reserved for 'empty'
     states.reserve(MAX_STATES);
     hashTable.clear();
     hashTable.resize(MAX_HASHES);
@@ -187,6 +190,8 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
 	--numOpen;
 
 	vector<Move> moves = states[bestIndex].moves();
+	++numExpanded;
+	numChildren += moves.size();
 	for (vector<Move>::const_iterator m = moves.begin();
 	     m != moves.end(); ++m) {
 	    ++totalNodesGenerated;
@@ -197,29 +202,33 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
 		     << (int64_t) (double(nodesGenerated) / timer.seconds())
 		     << "\n  open: " << numOpen
 		     << "\nstates: " << states.size()
-		     << " \t(" << (states.size() * sizeof(State2)) / 1000000
-		     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
+		     << " \t(" << (states.size() * sizeof(AStarState)) / 1000000
+		     << "M/" << (states.capacity() * sizeof(AStarState)) / 1000000
 		     << "M)\nhashes: " << hashTable.size()
 		     << " \t(" << (states.size() * sizeof(int)) / 1000000
 		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
-		     << "M)\n";
+		     << "M)\nAverage branching factor after "
+		     << numExpanded
+		     << " expansions: "
+		     << double(numChildren) / double(numExpanded)
+		     << endl;
 	    DEBUG0("moving " << states[bestIndex] << ' ' << *m);
-	    State2 newState2(states[bestIndex], *m);
-	    newState2.predecessor = bestIndex;
-	    DEBUG0("New state: " << newState2);
+	    AStarState newState(states[bestIndex], *m);
+	    newState.predecessor = bestIndex;
+	    DEBUG0("New state: " << newState);
 
-	    int minMovesLeft = newState2.minMovesLeft();
+	    int minMovesLeft = newState.minMovesLeft();
 	    if (minMovesLeft == 0) { // special property of our heuristic...
 		cout << "Found solution.\n"
 		     << "\nstates: " << states.size()
-		     << " \t(" << (states.size() * sizeof(State2)) / 1000000
-		     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
+		     << " \t(" << (states.size() * sizeof(AStarState)) / 1000000
+		     << "M/" << (states.capacity() * sizeof(AStarState)) / 1000000
 		     << "M)\nhashes: " << hashTable.size()
 		     << " \t(" << (states.size() * sizeof(int)) / 1000000
 		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
 		     << "M)\n";
-		State2* pNode = &states[bestIndex];
-		State2* pNextNode;
+		AStarState* pNode = &states[bestIndex];
+		AStarState* pNextNode;
 
 		bool done = false;
 		while (!done) {
@@ -235,7 +244,7 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
 		    for (vector<Move>::const_iterator m = moves.begin();
 			 m != moves.end(); ++m) {
 
-			if (State2(*pNode, *m) == *pNextNode) {
+			if (AStarState(*pNode, *m) == *pNextNode) {
 			    solution.push_front(*m);
 			    break;
 			}
@@ -244,13 +253,13 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
 		solution.push_back(*m);
 		return solution;
 	    }
-	    if (newState2.minTotalMoves() > maxMoves) {
-		DEBUG0("State2 exceeds move limit.");
+	    if (newState.minTotalMoves() > maxMoves) {
+		DEBUG0("State exceeds move limit.");
 		continue;
 	    }
-	    if (newState2.minTotalMoves() < minMinTotalMoves) {
+	    if (newState.minTotalMoves() < minMinTotalMoves) {
 		// This can't happen if the heuristic is monotone
-		DEBUG1("minTotalMoves of " << newState2.minTotalMoves()
+		DEBUG1("minTotalMoves of " << newState.minTotalMoves()
 		       << " smaller than previous minMinTotalMoves of "
 		       << minMinTotalMoves);
 		assert(0);
@@ -267,14 +276,14 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
 			// FIXME copy&paste
 			cout << "Found solution.\n"
 			     << "\nstates: " << states.size()
-			     << " \t(" << (states.size() * sizeof(State2)) / 1000000
-			     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
+			     << " \t(" << (states.size() * sizeof(AStarState)) / 1000000
+			     << "M/" << (states.capacity() * sizeof(AStarState)) / 1000000
 			     << "M)\nhashes: " << hashTable.size()
 			     << " \t(" << (states.size() * sizeof(int)) / 1000000
 			     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
 			     << "M)\n";
-			State2* pNode = &states[i];
-			State2* pNextNode;
+			AStarState* pNode = &states[i];
+			AStarState* pNextNode;
 
 			bool done = false;
 			while (!done) {
@@ -290,7 +299,7 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
 			    for (vector<Move>::const_iterator m = moves.begin();
 				 m != moves.end(); ++m) {
 				
-				if (State2(*pNode, *m) == *pNextNode) {
+				if (AStarState(*pNode, *m) == *pNextNode) {
 				    solution.push_front(*m);
 				    break;
 				}
@@ -308,8 +317,8 @@ deque<Move> aStar2(const State2& start, int nmaxMoves) {
 #endif
 	    }
 
-	    hashInsert(newState2);
-	    DEBUG0("inserted" << newState2);
+	    hashInsert(newState);
+	    DEBUG0("inserted" << newState);
 	}
     }
 

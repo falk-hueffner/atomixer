@@ -44,6 +44,7 @@ public:
     static const Pos* startPositions() { return myStartPositions; }
     static Pos startPosition(int nr) { return myStartPositions[nr]; }
     static Pos goalPosition(int nr) { return myGoalPositions[nr]; }
+    static int numIdentical(int nr) { return myNumIdentical[nr]; }
     static int goalDist(int atomNr, Pos pos) {
 	return goalDists[atomNr][pos.fieldNumber()];
     }
@@ -63,6 +64,7 @@ private:
     static bool myIsBlock[NUM_FIELDS];
     static Pos myStartPositions[NUM_ATOMS];
     static Pos myGoalPositions[NUM_ATOMS];
+    static int myNumIdentical[NUM_ATOMS + 100];
     static int goalDists[NUM_ATOMS][NUM_FIELDS];
     static Atom atoms[NUM_ATOMS];
 #ifdef DO_REVERSE_SEARCH

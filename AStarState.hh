@@ -19,28 +19,37 @@
   $Id$
 */
 
-#ifndef REV_STATE_HH
-#define REV_STATE_HH
+#ifndef ASTARSTATE_HH
+#define ASTARSTATE_HH
 
-#include "PackedState.hh"
+class Move;
 
-// A state which exact goal distance was determined by reverse search from the
-// goal state.
-class RevState : public PackedState {
+#include "State.hh"
+
+class AStarState : public State {
 public:
-    RevState() { }
-    explicit RevState(const Pos atomPositions[NUM_ATOMS])
-	: PackedState(atomPositions) { _goalDist = 0; }
-    explicit RevState(const unsigned char atomPositions[NUM_ATOMS])
-	: PackedState(atomPositions) { _goalDist = 0;}
-    RevState (const RevState& state, const Move& move)
-	: PackedState(state, move) { _goalDist = state._goalDist + 1; }
+    AStarState() { }		// leave uninitialized
+    AStarState(const State& state);
+    AStarState(const AStarState& state, const Move& move);
 
-    int goalDist() const { return _goalDist; }
-    bool better(const RevState& other) const { return _goalDist < other._goalDist; }
-    void update(const RevState& other) { _goalDist = other._goalDist; }
+    // overrides State::minMovesLeft()!
+    int minMovesLeft() const { return minMovesLeft_; }
+    // overrides State::minTotalMoves()!
+    int minTotalMoves() const { return numMoves + minMovesLeft_; }
+
+    int predecessor;
+
 private:
-    char _goalDist;
-};
+    void calcMinMovesLeft() { minMovesLeft_ = State::minMovesLeft(); }
+    unsigned char minMovesLeft_;
+
+public:				// for simplicity
+    unsigned int numMoves	: 7;
+    bool isOpen			: 1;
+}
+#ifdef HAVE_ATTRIBUTE_PACKED
+    __attribute__ ((packed))
+#endif
+    ;
 
 #endif

@@ -19,24 +19,83 @@
   $Id$
 */
 
-#include <iostream>
 #include <algorithm>
 
-#include "Dir.hh"
 #include "Problem.hh"
 #include "State.hh"
 
-using namespace std;
-
-State::State(const Pos atomPositions[NUM_ATOMS]) {
+State::State(const Pos positions[NUM_ATOMS]) {
     for (int i = 0; i < NUM_ATOMS; ++i)
-	myAtomPositions[i] = atomPositions[i].fieldNumber();
+	atomPositions_[i] = positions[i].fieldNumber();
+}
+
+State::State(const unsigned char positions[NUM_ATOMS]) {
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	atomPositions_[i] = positions[i];
 }
 
 State::State(const State& state, const Move& move) {
     for (int i = 0; i < NUM_ATOMS; ++i)
-	myAtomPositions[i] = state.myAtomPositions[i];
-    myAtomPositions[move.atomNr()] = move.pos2().fieldNumber();
+	atomPositions_[i] = state.atomPositions_[i];
+
+    apply(move);
+}
+
+void State::apply(const Move& move) {
+    int atomNr = move.atomNr();
+    atomPositions_[atomNr] = move.pos2().fieldNumber();
+
+    canonicallify(atomNr);
+}
+
+void State::undo(const Move& move) {
+    int atomNr = move.atomNr();
+    atomPositions_[atomNr] = move.pos1().fieldNumber();
+
+    canonicallify(atomNr);
+}
+
+int State::minMovesLeft() const {
+    int minMovesLeft = 0;
+
+    // 1. Unique atoms
+    for (int i = 0; i < NUM_UNIQUE; ++i)
+	minMovesLeft += Problem::goalDist(i, atomPositions_[i]);
+
+    // 2. Atoms with 2 instances
+    for (int i = PAIRED_START; i < PAIRED_END; i += 2) {
+	int moves1 = Problem::goalDist(i, atomPositions_[i])
+	    + Problem::goalDist(i + 1, atomPositions_[i + 1]);
+	int moves2 = Problem::goalDist(i, atomPositions_[i + 1])
+	    + Problem::goalDist(i + 1, atomPositions_[i]);
+	minMovesLeft += min(moves1, moves2);
+    }
+
+    //3. Atoms with n, n>2 instances
+    for (int i = MULTI_START; i < NUM_ATOMS; i += Problem::numIdentical(i)) {
+	// More than 16 equal atoms would be too slow anyway.
+	int perm[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+	int minMinMoves = 1000000;
+	do {
+	    int minMoves = 0;
+	    for (int j = 0; j < Problem::numIdentical(i); ++j) {
+		minMoves += Problem::goalDist(i + perm[j],
+					      atomPositions_[i + j]);
+	    }
+	    if (minMoves < minMinMoves)
+		minMinMoves = minMoves;
+	} while (next_permutation(perm, perm + Problem::numIdentical(i)));
+	minMovesLeft += minMinMoves;
+    }
+
+    return minMovesLeft;
+}
+
+bool State::operator==(const State& other) const {
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	if (atomPositions_[i] != other.atomPositions_[i])
+	    return false;
+    return true;
 }
 
 vector<Move> State::moves() const {
@@ -44,16 +103,17 @@ vector<Move> State::moves() const {
     moves.reserve(NUM_ATOMS * 3);
 
     bool isBlock[NUM_FIELDS];
+
     for (int i = 0; i < NUM_FIELDS; ++i)
 	isBlock[i] = Problem::isBlock(Pos(i));
     for (int i = 0; i < NUM_ATOMS; ++i)
-	isBlock[myAtomPositions[i]] = true;
+	isBlock[atomPositions_[i]] = true;
 
     for (int i = 0; i < NUM_ATOMS; ++i) {
 	for (int dirNr = 0; dirNr < 4; ++dirNr) {
-	    Dir dir = dirs[dirNr];
+	    Dir dir = DIRS[dirNr];
 	    
-	    Pos pos = myAtomPositions[i], tmppos = pos;
+	    Pos pos = atomPositions_[i], tmppos = pos;
 	    while (!isBlock[(tmppos += dir).fieldNumber()]) { }
 	    Pos newpos = tmppos - dir;
 	    if (newpos != pos)
@@ -64,37 +124,61 @@ vector<Move> State::moves() const {
     return moves;
 }
 
-int State::minMovesLeft() const {
-    int minMovesLeft = 0;
-    for (int i = 0; i < NUM_UNIQUE; ++i)
-	minMovesLeft += Problem::goalDist(i, myAtomPositions[i]);
-    for (int i = PAIRED_START; i < NUM_ATOMS; i += 2) {
-	int moves1 = Problem::goalDist(i, myAtomPositions[i])
-	    + Problem::goalDist(i + 1, myAtomPositions[i + 1]);
-	int moves2 = Problem::goalDist(i, myAtomPositions[i + 1])
-	    + Problem::goalDist(i + 1, myAtomPositions[i]);
-	minMovesLeft += min(moves1, moves2);
+vector<Move> State::rmoves() const {
+    vector<Move> moves;
+    moves.reserve(NUM_ATOMS * 3);
+
+    bool isBlock[NUM_FIELDS];
+    for (int i = 0; i < NUM_FIELDS; ++i)
+	isBlock[i] = Problem::isBlock(Pos(i));
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	isBlock[atomPositions_[i]] = true;
+
+    for (int i = 0; i < NUM_ATOMS; ++i) {
+	for (int dirNr = 0; dirNr < 4; ++dirNr) {
+	    Dir dir = DIRS[dirNr];
+	    if (!isBlock[atomPositions_[i] - dir])
+		continue;
+
+	    Pos pos = atomPositions_[i];
+	    while (!isBlock[(pos += dir).fieldNumber()])
+		moves.push_back(Move(i, atomPositions_[i], pos, dir));
+	}
     }
 
-    return minMovesLeft;
+    return moves;
 }
 
-bool State::operator<(const State& other) const {
+size_t State::hash() const {
+    size_t result = 0;
+
+    // Perl uses 33; try that eventually, might be more magic.
     for (int i = 0; i < NUM_ATOMS; ++i)
-	if (myAtomPositions[i] != other.myAtomPositions[i])
-	    return myAtomPositions[i] < other.myAtomPositions[i];
-    return false;
-}
-    
-bool State::operator==(const State& other) const {
-    for (int i = 0; i < NUM_ATOMS; ++i)
-	if (myAtomPositions[i] != other.myAtomPositions[i])
-	    return false;
-    return true;
+	result = 97 * result + atomPositions_[i];
+
+    return result;
 }
 
-ostream& operator<<(ostream& out, const State& state) {
+// canonicallify pairs: the first one should always have the lower
+// position. This avoids storing logically identical states twice in the
+// hash table.
+void State::canonicallify(int atomNr) {
+    if (atomNr >= PAIRED_START && atomNr < PAIRED_END) {
+	if ((atomNr - PAIRED_START) % 2 == 0) {
+	    if (atomPositions_[atomNr + 1] < atomPositions_[atomNr])
+		swap(atomPositions_[atomNr + 1], atomPositions_[atomNr]);
+	} else {
+	    if (atomPositions_[atomNr - 1] > atomPositions_[atomNr])
+		swap(atomPositions_[atomNr - 1], atomPositions_[atomNr]);
+	}
+    }
+
+    // FIXME canonicallify MULTI
+}
+
+std::ostream& operator<<(std::ostream& out, const State& state) {
     for (int i = 0; i < NUM_ATOMS; ++i)
-	out << Pos(state.myAtomPositions[i]) << ' ';
+	out << Pos(state.atomPositions_[i]) << ' ';
+
     return out;
 }

@@ -22,33 +22,48 @@
 #ifndef STATE_HH
 #define STATE_HH
 
-#include <iosfwd>
+#include <iostream>
 #include <vector>
 
-class Problem;
-
 #include "Move.hh"
+#include "Size.hh"
 
-using namespace std;
+// A complete representation of a game state.
 
 class State {
-    friend ostream& operator<<(ostream& out, const State& state);
-
+    friend std::ostream& operator<<(std::ostream& out, const State& state);
 public:
-    State() { }			// leave uninitialized
-    explicit State(const Pos atomPositions[NUM_ATOMS]);
+    // leave uninitialized
+    State() { }
+    // mostly for constructing starting state from the static data in Problem
+    State(const Pos positions[NUM_ATOMS]);
+    // useful for constructing from another State descendant
+    State(const unsigned char positions[NUM_ATOMS]);
+    // apply move
     State(const State& state, const Move& move);
 
-    bool operator<(const State& other) const; // to put into STL set
+    int atomPosition(int atomNr) const { return atomPositions_[atomNr]; }
+    const unsigned char* atomPositions() const { return atomPositions_; }
+    int minMovesLeft() const;
+    
     bool operator==(const State& other) const;
 
-    const unsigned char* atomPositions() const { return myAtomPositions; }
+    void apply(const Move& move);
+    void undo(const Move& move);
 
-    vector<Move> moves() const;
-    int minMovesLeft() const;
+    std::vector<Move> moves() const;
+    std::vector<Move> rmoves() const;
+
+    size_t hash() const;
 
 private:
-    unsigned char myAtomPositions[NUM_ATOMS];
-};
+    void canonicallify(int atomNr);
+
+    unsigned char atomPositions_[NUM_ATOMS];
+}
+#ifdef HAVE_ATTRIBUTE_PACKED
+    __attribute__ ((packed))
+#endif
+    ;
 
 #endif

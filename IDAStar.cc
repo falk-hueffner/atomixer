@@ -32,7 +32,7 @@ typedef long long int64_t;
 #include "Dir.hh"
 #include "IDAStar.hh"
 #include "IDAStarState.hh"
-#include "IDAStarPackedState.hh"
+#include "IDAStarCacheState.hh"
 #include "Problem.hh"
 #include "Timer.hh"
 #include "HashTable.hh"
@@ -44,12 +44,14 @@ using namespace std;
 
 extern int64_t totalNodesGenerated;
 
+int64_t numExpanded = 0, numChildren = 0, numPruned = 0;
+
 // maximum amount of memory to be used
 static const unsigned int MEMORY = 300 * 1024 * 1024;
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
-    (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(IDAStarPackedState)));
+    (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(IDAStarCacheState)));
 
 // global variables to describe current search state
 static int maxMoves;
@@ -59,20 +61,23 @@ static deque<Move> solution;
 static int64_t nodesGenerated, lastOutput;
 static Timer timer;
 static int cacheGoalNr = -1;
-//static HashTable<IDAStarPackedState> cachedStates(MAX_STATES, LOAD_FACTOR);
-static HashTable<IDAStarPackedState> cachedStates;
+//static HashTable<IDAStarCacheState> cachedStates(MAX_STATES, LOAD_FACTOR);
+static HashTable<IDAStarCacheState> cachedStates;
 
-static bool dfs(IDAStarMove lastMove);
+static bool dfs(Move lastMove);
 deque<Move> IDAStar(int maxDist) {
     DEBUG0("IDAStar" << maxDist);
     moves = 0;
     nodesGenerated = 1;
     lastOutput = 0;
-    state = IDAStarState(0);
+    state = IDAStarState(Problem::startPositions());
     solution.clear();
+    if (state.minMovesLeft() > maxDist)
+	return solution;	// saves memory allocation and freeing
+
     //DEBUG1(cachedStates.capacity() << " 1 " << MAX_STATES);
     //if (cachedStates.capacity() != MAX_STATES)
-    //cachedStates = HashTable<IDAStarPackedState>(MAX_STATES, LOAD_FACTOR);
+    //cachedStates = HashTable<IDAStarCacheState>(MAX_STATES, LOAD_FACTOR);
     //DEBUG1(cachedStates.capacity() << " 2 " << MAX_STATES);
     if (Problem::goalNr != cacheGoalNr) {
 	DEBUG1("cache of wrong goal nr. Clearing.");
@@ -82,7 +87,7 @@ deque<Move> IDAStar(int maxDist) {
 	    DEBUG1("Pre-heating cache.");
 	    for (maxMoves = 0; maxMoves < maxDist; ++maxMoves) {
 		DEBUG1("Pre-heating with maxDist = " << maxMoves);
-		dfs(IDAStarMove());
+		dfs(Move());
 		assert(solution.empty());
 	    }
 	    DEBUG1("Pre-heated cache.");
@@ -91,15 +96,17 @@ deque<Move> IDAStar(int maxDist) {
     maxMoves = maxDist;
 
     timer.reset();
-    dfs(IDAStarMove());
+    dfs(Move());
     totalNodesGenerated += nodesGenerated;
 
     return solution;
 }
 
+#if 0
 static string spaces(int n) {
     return string(n, ' ');
 }
+#endif
 
 static inline bool between(Pos p1, Pos p2, Dir dir, Pos pm) {
     switch(dir) {
@@ -115,15 +122,18 @@ static inline bool between(Pos p1, Pos p2, Dir dir, Pos pm) {
     assert(false);
 }
 
-static bool dfs(IDAStarMove lastMove) {
+static bool dfs(Move lastMove) {
     DEBUG0(spaces(moves) << "dfs: moves =  " << moves << " state = " << state);
     if (state.minMovesLeft() == 0)
 	return true;		// not true for all heuristics, but for this one
     if (moves + state.minMovesLeft() > maxMoves)
 	return false;
 
-    IDAStarPackedState* cachedState =
-	cachedStates.find(IDAStarPackedState(state.positions()));
+    // We know HashTable::find() only uses State::operator==(), and nothing
+    // from IDAStarCacheState, so this cast works.
+    IDAStarCacheState* cachedState =
+	cachedStates.find(*reinterpret_cast<IDAStarCacheState*>(&state));
+	//cachedStates.find(IDAStarCacheState(state.positions()));
 
     if (cachedState != NULL) {
 	DEBUG0("found" << state << " in cache");
@@ -145,40 +155,54 @@ static bool dfs(IDAStarMove lastMove) {
 	     << " moves = " << moves
 	     << " nodes/second: "
 	     << (int64_t) (double(nodesGenerated) / timer.seconds())
+	     << "\nAverage branching factor after "
+	     << numExpanded
+	     << " expansions: "
+	     << double(numChildren) / double(numExpanded)
+	     << "\nAverage prunded children: "
+	     << double(numPruned) / double(numExpanded)
+	     << "\nAverage effective branching factor: "
+	     << double(numChildren - numPruned) / double(numExpanded)
 	     << endl;
     }
 
     // generate all moves...
-    for (int atomNo = 0; atomNo < NUM_ATOMS; ++atomNo) {
-	Pos startPos = state.position(atomNo);
+    ++numExpanded;
+    for (int atomNr = 0; atomNr < NUM_ATOMS; ++atomNr) {
+	Pos startPos = state.atomPosition(atomNr);
 	for (int dirNo = 0; dirNo < 4; ++dirNo) {
 	    Dir dir = DIRS[dirNo];
-	    DEBUG0(spaces(moves) << "moving " << atomNo << " @ " << startPos
+	    DEBUG0(spaces(moves) << "moving " << atomNr << " @ " << startPos
 		   << ' ' << dir);
 	    Pos pos;
 	    for (pos = startPos + dir; !state.isBlocking(pos); pos += dir) { }
 	    Pos newPos = pos - dir;
 	    if (newPos != startPos) {
+		++numChildren;
 		DEBUG0(spaces(moves) << "moves to " << newPos);
-		IDAStarMove move(atomNo, dir, startPos, newPos);
+		Move move(atomNr, startPos, newPos, dir);
 		if (moves > 0) {
-		    if (atomNo == lastMove.atomNo && dir == -lastMove.dir)
+		    if (atomNr == lastMove.atomNr() && dir == -lastMove.dir()) {
+			++numPruned;
 			continue;
-		    if (atomNo < lastMove.atomNo) {
+		    }
+		    if (atomNr < lastMove.atomNr()) {
 			// this is only allowed if the two moves are not independent.
-			if (!(between(lastMove.p1, lastMove.p2, lastMove.dir, newPos)
-			      || newPos + dir == lastMove.p2
-			      || between(startPos, newPos, dir, lastMove.p1)
-			      || startPos == lastMove.p2 + lastMove.dir))
-			      //|| newPos == lastMove.p2 + lastMove.dir))
+			if (!(between(lastMove.pos1(), lastMove.pos2(),
+				      lastMove.dir(), newPos)
+			      || newPos + dir == lastMove.pos2()
+			      || between(startPos, newPos, dir, lastMove.pos1())
+			      || startPos == lastMove.pos2() + lastMove.dir())) {
+			    ++numPruned;
 			    continue;
+			}
 		    }
 		}
 		state.apply(move);
 		++moves;
 		++nodesGenerated;
 		if (dfs(move)) {
-		    solution.push_front(Move(atomNo, startPos, newPos, dir));
+		    solution.push_front(Move(atomNr, startPos, newPos, dir));
 		    return true;
 		}
 		--moves;
@@ -187,14 +211,8 @@ static bool dfs(IDAStarMove lastMove) {
 	}
     }
     if (cachedStates.size() < cachedStates.capacity())
-	cachedStates.insert(IDAStarPackedState(state.positions(),
+	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
 					       moves, (maxMoves + 0) - moves));
-    //moves, maxMoves - moves));
+    // FIXME what is the correct value??
     return false;
-}
-
-ostream& operator<<(ostream& out, const IDAStarState& state) {
-    for (int i = 0; i < NUM_ATOMS; ++i)
-	out << state._positions[i] << ' ';
-    return out << state._minMovesLeft; 
 }
