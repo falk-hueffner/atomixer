@@ -55,9 +55,9 @@ string isotime() {
 
 extern "C" {
     void writestats() {
-	ofstream statsStream("statistics-"ALGORITHM_NAME, ios::app);
+	ofstream statsStream("statistics-" ALGORITHM_NAME, ios::app);
 	statsStream << levelName
-		    << " with " ALGORITHM_NAME << " final statistics:\n";
+		    << " with " ALGORITHM_NAME " final statistics:\n";
 	Statistics::print(statsStream);
 	if (Statistics::solutionLength != 0) {
 	    statsStream << " Solution length:  " << Statistics::solutionLength << endl;
@@ -107,8 +107,8 @@ int main(int argc, char* argv[]) {
 	levelName = levelName.substr(levelName.find('/') + 1);
     cout << "Solving " << levelName << "...\n";
 
-    //int knownLowerBound = 0;
-    int knownLowerBound = 7;
+    int knownLowerBound = 0;
+    //int knownLowerBound = 7;
 
     /*
     ifstream statStream("stats");

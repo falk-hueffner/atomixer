@@ -55,7 +55,7 @@ public:
     inline bool operator==(const State& other) const;
 
     inline void apply(const Move& move);
-    //void undo(const Move& move); // not easily implementable with canonicallification
+    inline void undo(const Move& move);
 
     inline std::vector<Move> moves() const;
     inline std::vector<Move> rmoves() const;
@@ -65,8 +65,6 @@ public:
     inline uint64_t hash64_2() const;
 
 protected:
-    inline void canonicallify(int atomNr);
-
     unsigned char atomPositions_[NUM_ATOMS];
 }
 #ifdef HAVE_ATTRIBUTE_PACKED

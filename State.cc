@@ -45,18 +45,12 @@ State::State(const State& state, const Move& move) {
 void State::apply(const Move& move) {
     int atomNr = move.atomNr();
     atomPositions_[atomNr] = move.pos2().fieldNumber();
-
-    canonicallify(atomNr);
 }
 
-/*
 void State::undo(const Move& move) {
     int atomNr = move.atomNr();
     atomPositions_[atomNr] = move.pos1().fieldNumber();
-
-    canonicallify(atomNr);
 }
-*/
 
 int State::minMovesLeft() const {
     int minMovesLeft = 0;
@@ -203,33 +197,6 @@ uint64_t State::hash64_2() const {
     return python;
 }
  
-// canonicallify pairs: the first one should always have the lower
-// position. This avoids storing logically identical states twice in the
-// hash table.
-void State::canonicallify(int atomNr) {
-    if (atomNr >= PAIRED_START && atomNr < PAIRED_END) {
-	if ((atomNr - PAIRED_START) % 2 == 0) {
-	    if (atomPositions_[atomNr + 1] < atomPositions_[atomNr])
-		swap(atomPositions_[atomNr + 1], atomPositions_[atomNr]);
-	} else {
-	    if (atomPositions_[atomNr - 1] > atomPositions_[atomNr])
-		swap(atomPositions_[atomNr - 1], atomPositions_[atomNr]);
-	}
-    } else if (atomNr >= MULTI_START) {
-	// Bubble sort the changed element to the correct position.
-	// Slightly inefficient, swapping all the time. But easy to read, and
-	// numIdentical is usually small, like 3.
-	for (int i = atomNr - 1;
-	     i >= Problem::firstIdentical(atomNr)
-		 && atomPositions_[i] > atomPositions_[i + 1]; --i)
-	    swap(atomPositions_[i + 1], atomPositions_[i]);
-	for (int i = atomNr + 1;
-	     i < Problem::firstIdentical(atomNr) + Problem::numIdentical(atomNr)
-		 && atomPositions_[i - 1] > atomPositions_[i]; ++i)
-	    swap(atomPositions_[i - 1], atomPositions_[i]);
-    }
-}
-
 inline std::ostream& operator<<(std::ostream& out, const State& state) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	out << Pos(state.atomPositions_[i]) << ' ';

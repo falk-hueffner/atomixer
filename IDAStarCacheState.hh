@@ -22,23 +22,21 @@
 #ifndef IDASTARCACHESTATE_HH
 #define IDASTARCACHESTATE_HH
 
-#include "Pos.hh"
-#include "State.hh"
+#include "CacheState.hh"
+#include "IDAStarState.hh"
 
 // A compact representation for use in transposition tables in IDAStar. This
-// could be implemented much nicer with a HashMap mapping from States to a
-// pair of ints, but thay would waste a few (2) bytes. Perhaps I should do it
-// anyway...
+// could be implemented much nicer with a HashMap mapping from CacheStates to
+// a pair of ints, but thay would waste a few (2) bytes. Perhaps I should do
+// it anyway...
 
-class IDAStarCacheState : public State {
+class IDAStarCacheState : public CacheState {
 public:
     // leave uninitialized
     IDAStarCacheState() { }
-    //IDAStarCacheState(const unsigned char positions[NUM_ATOMS]) : State(positions) { }
-    IDAStarCacheState(const unsigned char positions[NUM_ATOMS],
-		      int nminMovesFromStart, int nminMovesLeft)
-	: State(positions), minMovesFromStart(nminMovesFromStart),
-	  minMovesLeft(nminMovesLeft) { }
+    IDAStarCacheState(const IDAStarState& state)
+	: CacheState(state), minMovesFromStart(state.moves()),
+	  minMovesLeft(state.minMovesLeft()) { }
 
     // This method will be called when "other" is inserted into the hash
     // table, and represents the same state as "*this".
