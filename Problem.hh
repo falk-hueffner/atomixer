@@ -33,7 +33,8 @@ using namespace std;
 
 class Problem {
 public:
-    static void setProblem(const Level& level, int goalPosNr);
+    static void setLevel(const Level& level);
+    static void setGoal(const Level& level, int goalPosNr);
 
     static bool isBlock(Pos p) { return myIsBlock[p.fieldNumber()]; }
     static const vector<Pos>& startPositions() { return myStartPositions; }
