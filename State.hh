@@ -61,7 +61,8 @@ public:
     inline std::vector<Move> rmoves() const;
 
     inline size_t hash() const;
-    inline uint64_t hash64() const;
+    inline uint64_t hash64_1() const;
+    inline uint64_t hash64_2() const;
 
 protected:
     inline void canonicallify(int atomNr);

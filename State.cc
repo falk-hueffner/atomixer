@@ -169,7 +169,7 @@ size_t State::hash() const {
     return result;
 }
 
-uint64_t State::hash64() const {
+uint64_t State::hash64_1() const {
     /*
     uint64_t perl = 0;
     for (int i = 0; i < NUM_ATOMS; ++i)
@@ -195,6 +195,13 @@ uint64_t State::hash64() const {
     return hash;
 }
 
+uint64_t State::hash64_2() const {
+    uint64_t python = atomPositions_[0] << 7;
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	python = (1000003 * python) ^ atomPositions_[i];
+
+    return python;
+}
  
 // canonicallify pairs: the first one should always have the lower
 // position. This avoids storing logically identical states twice in the

@@ -28,11 +28,16 @@
 //#undef DO_MOVE_ORDERING
 //#define DO_MOVE_ORDERING 1
 
-#undef DO_CACHING
-//#define DO_CACHING 1
+//#undef DO_CACHING
+#define DO_CACHING 1
 
-//#undef DO_PARTIAL
-#define DO_PARTIAL 1
+#undef DO_PARTIAL
+//#define DO_PARTIAL 1
+
+#undef DO_STOCHASTIC_CACHING
+//#define DO_STOCHASTIC_CACHING 1
+
+#define CACHE_INSERT_PROBABILITY 0.1
 
 #include <assert.h>
 #include <stdlib.h>
@@ -72,7 +77,7 @@ static HashTable<IDAStarCacheState> cachedStates;
 #ifdef DO_PARTIAL
 static BitVector stateBits;
 static uint64_t numBitsSet;
-static uint64_t maxBitsSet = (MEMORY * 8) / 8;
+static const uint64_t maxBitsSet = (MEMORY * 8) / 8;
 static bool doAddBits = true;
 #endif
 
@@ -187,7 +192,11 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 	    return false;
     }
 
-    if (cachedStates.size() < cachedStates.capacity())
+    if (cachedStates.size() < cachedStates.capacity()
+#ifdef DO_STOCHASTIC_CACHING
+	&& double(rand()) / double(RAND_MAX)  <= CACHE_INSERT_PROBABILITY
+#endif
+	)
 	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
 					      moves, minMovesLeft));
 #endif
@@ -230,6 +239,7 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 		++Statistics::numChildren;
 		DEBUG0(spaces(moves) << "moves to " << newPos);
 		Move move(atomNr, startPos, newPos, dir);
+#ifdef DO_MOVE_PRUNING
 		if (moves > 0) {
 		    if (atomNr == lastMove.atomNr() && dir == -lastMove.dir()) {
 			++Statistics::numPruned;
@@ -247,6 +257,7 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 			}
 		    }
 		}
+#endif
 		//unsigned char oldatoms[NUM_ATOMS];
 		//for (int i = 0; i < NUM_ATOMS; ++i)
 		//    oldatoms[i] = state.atomPosition(i);
@@ -259,15 +270,19 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 
 #ifdef DO_PARTIAL
 		// ugh... 64 bit modulo is dog slow on i386...
-		uint64_t hash = newState.hash64() % stateBits.numBits();
-		DEBUG0(newState << " hashes to " << hash);
-		if (stateBits.isSet(hash)) {
-		    DEBUG0(" bit already set");
+		uint64_t hash1 = newState.hash64_1() % stateBits.numBits();
+		uint64_t hash2 = newState.hash64_2() % stateBits.numBits();
+		DEBUG0(newState << " hashes to " << hash1 << " & " << hash2);
+		int bitsSet = stateBits.isSet(hash1) + stateBits.isSet(hash2);
+		if (bitsSet == 2) {
+		    DEBUG0(" bits already set");
 		    continue;
 		}
 		if (doAddBits) {
-		    stateBits.set(hash);
-		    if (++numBitsSet > maxBitsSet) {
+		    stateBits.set(hash1);
+		    stateBits.set(hash2);
+		    numBitsSet += 2 - bitsSet;
+		    if (numBitsSet > maxBitsSet) {
 			DEBUG1(" Bit hash table full");
 			doAddBits = false;
 		    }
@@ -276,6 +291,7 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 	    //assert(stateBits.isSet(hash));
 #endif
 
+		
 		int newMinMovesLeft = newState.minMovesLeft();
 
 		switch (newMinMovesLeft - minMovesLeft) {
@@ -346,7 +362,11 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
     }
 
 #ifdef DO_CACHING
-    if (cachedStates.size() < cachedStates.capacity())
+    if (cachedStates.size() < cachedStates.capacity()
+#ifdef DO_STOCHASTIC_CACHING
+	&& double(rand()) / double(RAND_MAX)  <= CACHE_INSERT_PROBABILITY
+#endif
+	)
 	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
 					       moves, (maxMoves + 1) - moves));
 #endif
