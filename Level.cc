@@ -23,11 +23,24 @@
 
 #include "Level.hh"
 
-using namespace std;
+Level::Level(istream& in) {
+    map<string, string> lines;
+    string line;
 
-int main() {
-    Level level(cin);
+    while (getline(in, line)) {
+	string::size_type equalPos = line.find('=');
+	if (equalPos == string::npos)
+	    continue;
+	string key   = line.substr(0, equalPos);
+	string value = line.substr(equalPos + 1);
 
-    cout << level << endl;
-    return 0;
+	lines[key] = value;
+    }
+
+    myStartBoard = Board(lines, "feld", 2);
+    myGoal       = Board(lines, "mole", 1);
+}
+
+ostream& operator<<(ostream& out, const Level& level) {
+    return out << level.goal() << level.startBoard();
 }
