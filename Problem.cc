@@ -35,7 +35,8 @@ using namespace std;
 bool Problem::myIsBlock[NUM_FIELDS];
 Pos Problem::myStartPositions[NUM_ATOMS];
 Pos Problem::myGoalPositions[NUM_ATOMS];
-int Problem::myNumIdentical[NUM_ATOMS + 100];
+int Problem::myNumIdentical[NUM_ATOMS];
+int Problem::myFirstIdentical[NUM_ATOMS];
 int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
 int Problem::goalNr;
 Atom Problem::atoms[NUM_ATOMS];
@@ -83,21 +84,17 @@ void Problem::setLevel(const Level& level) {
 	}
 	default:
 	    cout << "num: " << startAtoms.count(atom) << endl;
-	    for (int i = 0; i < startAtoms.count(atom); ++i) {
-		if (i != 0)
+	    for (int nr = MULTI_START + numMulti;
+		 nr < MULTI_START + numMulti + startAtoms.count(atom); ++nr) {
+		if (nr != MULTI_START + numMulti)
 		    ++pf;
 		assert(pf->first == atom);
-		atoms[MULTI_START + numMulti] = atom;
-		myStartPositions[MULTI_START + numMulti] = pf->second;
-		cout << "myStartPositions[" << MULTI_START + numMulti
-		     << "] = " << myStartPositions[MULTI_START + numMulti]
-		     << endl;
-		myNumIdentical[MULTI_START + numMulti] = startAtoms.count(atom);
-		cout << "myNumIdentical[" << MULTI_START + numMulti
-		     << "] = " << myNumIdentical[MULTI_START + numMulti]
-		     << endl;
-		++numMulti;
+		atoms[nr] = atom;
+		myStartPositions[nr] = pf->second;
+		myNumIdentical[nr] = startAtoms.count(atom);
+		myFirstIdentical[nr] = MULTI_START + numMulti;
 	    }
+	    numMulti += startAtoms.count(atom);
 	}
     }
     cout << "unique: " << numUnique << "; paired: " << numPaired

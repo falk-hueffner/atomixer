@@ -180,9 +180,19 @@ void State::canonicallify(int atomNr) {
 	    if (atomPositions_[atomNr - 1] > atomPositions_[atomNr])
 		swap(atomPositions_[atomNr - 1], atomPositions_[atomNr]);
 	}
+    } else if (atomNr >= MULTI_START) {
+	// Bubble sort the changed element to the correct position.
+	// Slightly inefficient, swapping all the time. But easy to read, and
+	// numIdentical is usually small, like 3.
+	for (int i = atomNr - 1;
+	     i >= Problem::firstIdentical(atomNr)
+		 && atomPositions_[i] > atomPositions_[i + 1]; --i)
+	    swap(atomPositions_[i + 1], atomPositions_[i]);
+	for (int i = atomNr + 1;
+	     i < Problem::firstIdentical(atomNr) + Problem::numIdentical(atomNr)
+		 && atomPositions_[i - 1] > atomPositions_[i]; ++i)
+	    swap(atomPositions_[i - 1], atomPositions_[i]);
     }
-
-    // FIXME canonicallify MULTI
 }
 
 std::ostream& operator<<(std::ostream& out, const State& state) {
