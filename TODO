@@ -1,1 +1,13 @@
+Algorithms:
+* BDDs?
+* Partial IDA*?
+
+Heuristic:
+* linear conflicts?
+* stoppers?
+
+Code:
 * make Pos() explicit?
+* more than 2 identical atoms
+* hash function
+* hash table
