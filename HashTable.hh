@@ -43,16 +43,15 @@ public:
     size_t capacity() const { return elements.capacity() - 1; }
     
     HashTable(int numElements, double nloadFactor) {
-	loadFactor = nloadFactor;
-	clear(numElements);
+	clear(numElements, nloadFactor);
     }
 
     HashTable() {
-	loadFactor = 2.0;
-	clear(256);
+	clear(256, 1.5);
     }
 
-    void clear(int initialSize) {
+    void clear(int initialSize, double nloadFactor = 1.5) {
+	loadFactor = nloadFactor;
 	elements.clear();
 	cout << "Reserving space for " << initialSize + 1 << " elems.\n";
 	elements.reserve(initialSize + 1);
