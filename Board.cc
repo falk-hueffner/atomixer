@@ -52,6 +52,28 @@ Board::Board(map<string, string> lines, string key, int len) {
 	    }
 	}
     }
+    for (int x = 0; x < Board::XSIZE; ++x) {
+	floodFill(x, 0);
+	floodFill(x, YSIZE - 1);
+    }
+    for (int y = 0; y < Board::YSIZE; ++y) {
+	floodFill(0, y);
+	floodFill(XSIZE - 1, y);
+    }
+}
+
+void Board::floodFill(int x, int y) {
+    if (!field(x, y).isEmpty())
+	return;
+    myFields[x][y] = Atom("#");
+    if (x > 0)
+	floodFill(x - 1, y);
+    if (y > 0)
+	floodFill(x, y - 1);
+    if (x < XSIZE - 1)
+	floodFill(x + 1, y);
+    if (y < YSIZE - 1)
+	floodFill(x, y + 1);
 }
 
 ostream& operator<<(ostream& out, const Board& board) {
@@ -64,15 +86,15 @@ ostream& operator<<(ostream& out, const Board& board) {
     out << endl;
     for (int y = 0; y < Board::YSIZE; ++y) {
 	string sublines[3];
-	bool allEmpty = true;
+	bool allBlock = true;
 	for (int x = 0; x < Board::XSIZE; ++x) {
-	    if (!board.field(x, y).isEmpty())
-		allEmpty = false;
+	    if (!board.field(x, y).isBlock())
+		allBlock = false;
 	    vector<string> atomLines = board.field(x, y).toAscii();
 	    for (int i = 0; i < 3; ++i) 
 		sublines[i] += atomLines[i] + '|';
 	}
-	if (!allEmpty) {
+	if (!allBlock) {
 	    for (int i = 0; i < 3; ++i) {
 		if (i == 1)
 		    out << ' ' << y << (y >= 10 ? "|" : " |");

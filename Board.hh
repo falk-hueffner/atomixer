@@ -41,6 +41,8 @@ public:
     const Atom& field(int x, int y) const { return myFields[x][y]; }
 
 private:
+    void floodFill(int x, int y);
+    
     Atom myFields[XSIZE][YSIZE];
     Atom myGoal[XSIZE][YSIZE];
 };
