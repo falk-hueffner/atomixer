@@ -19,6 +19,12 @@
   $Id$
 */
 
+#if HAVE_STDINT_H
+# include <stdint.h>
+#else
+typedef long long int64_t;
+#endif
+
 #include <deque>
 #include <iostream>
 #include <vector>
@@ -105,14 +111,14 @@ private:
     int _minMovesLeft;
 };
 
-extern long long totalNodesGenerated;
+extern int64_t totalNodesGenerated;
 
 // global variables to describe current search state
 static int maxMoves;
 static int moves;
 static IDAStarState state;
 static deque<Move> solution;
-static long long nodesGenerated, lastOutput;
+static int64_t nodesGenerated, lastOutput;
 static Timer timer;
 
 static bool dfs();
@@ -149,7 +155,7 @@ static bool dfs() {
 	     << " Nodes: " << nodesGenerated
 	     << " moves = " << moves
 	     << " nodes/second: "
-	     << (long long) (double(nodesGenerated) / timer.seconds())
+	     << (int64_t) (double(nodesGenerated) / timer.seconds())
 	     << endl;
     }
 

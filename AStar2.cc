@@ -20,6 +20,11 @@
 */
 
 #include <stdlib.h>
+#if HAVE_STDINT_H
+# include <stdint.h>
+#else
+typedef long long int64_t;
+#endif
 
 #include <algorithm>
 #include <deque>
@@ -50,7 +55,7 @@ static int minMinTotalMoves;
 static int firstOpen;
 static int searchIndex;
 static int numOpen;
-static long long nodesGenerated;
+static int64_t nodesGenerated;
 static Timer timer;
 
 void hashInsert(const State2& state) {
@@ -156,7 +161,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
     searchIndex = firstOpen;
     numOpen = 0;
     
-    static long long totalNodes = 0;
+    static int64_t totalNodes = 0;
     
     DEBUG1("start state: " << start);
     hashInsert(start);
@@ -241,7 +246,7 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 		cout << "best: " << states[bestIndex] << endl
 		     << " Nodes: " << nodesGenerated
 		     << " nodes/second: "
-		     << (long long) (double(nodesGenerated) / timer.seconds())
+		     << (int64_t) (double(nodesGenerated) / timer.seconds())
 		     << "\n  open: " << numOpen
 		     << "\nstates: " << states.size()
 		     << " \t(" << (states.size() * sizeof(State2)) / 1000000

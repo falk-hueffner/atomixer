@@ -19,6 +19,12 @@
   $Id$
 */
 
+#if HAVE_STDINT_H
+# include <stdint.h>
+#else
+typedef long long int64_t;
+#endif
+
 #include <deque>
 #include <iostream>
 #include <queue>
@@ -70,7 +76,7 @@ public:
 };
 
 deque<Move> aStar(const State& start, int maxDist) {
-    static long long totalNodes = 0;
+    static int64_t totalNodes = 0;
     long counter = 0;
     long stales = 0;
 

@@ -27,7 +27,7 @@ else
 fi
 
 AC_LANG_CPLUSPLUS
-AC_CHECK_HEADERS(hash_map ext/hash_map sstream)
+AC_CHECK_HEADERS(hash_map ext/hash_map sstream stdint.h)
 
 AC_MSG_CHECKING([for __attribute__ ((packed))])
 AC_TRY_COMPILE([struct Foo { } __attribute__ ((packed));],[],
