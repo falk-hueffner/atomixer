@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <stdint.h>
 
 #include "Dir.hh"
 #include "Problem.hh"
@@ -32,8 +33,12 @@ using namespace std;
 State2::State2(const Pos natomPositions[NUM_ATOMS]) {
     numMoves = 0;
     isOpen = true;
-    for (int i = 0; i < NUM_ATOMS; ++i)
+    for (int i = 0; i < NUM_ATOMS; ++i) {
 	atomPositions[i] = natomPositions[i].fieldNumber();
+#ifdef DO_MOVE_CUT
+	mayMove[i] = 0xf;
+#endif
+    }
     calcMinMovesLeft();
 }
 
@@ -42,7 +47,21 @@ State2::State2(const State2& state, const Move& move) {
     isOpen = true;
     for (int i = 0; i < NUM_ATOMS; ++i)
 	atomPositions[i] = state.atomPositions[i];
-    atomPositions[move.atomNr()] = move.pos2().fieldNumber();
+    int atomNr = move.atomNr();
+    atomPositions[atomNr] = move.pos2().fieldNumber();
+
+    // canonicallify pairs: the first one should always have the lower
+    // position. This avoids storing logically identical states twice in the
+    // hash table.
+    if (atomNr >= PAIRED_START) {
+	if ((atomNr - PAIRED_START) % 2 == 0) {
+	    if (atomPositions[atomNr + 1] < atomPositions[atomNr])
+		swap(atomPositions[atomNr + 1], atomPositions[atomNr]);
+	} else {
+	    if (atomPositions[atomNr - 1] > atomPositions[atomNr])
+		swap(atomPositions[atomNr - 1], atomPositions[atomNr]);
+	}
+    }
     calcMinMovesLeft();
 }
 
