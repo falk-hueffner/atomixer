@@ -154,8 +154,7 @@ size_t State2::hash() const {
     size_t result = 0;
 
     for (int i = 0; i < NUM_ATOMS; ++i)
-	//result = 97 * result + atomPositions[i];
-	result = 5 * result + atomPositions[i];
+	result = 97 * result + atomPositions[i];
 
     return result;
 }
