@@ -363,7 +363,8 @@ static bool dfs(const Move& lastMove) {
 		if (++hash == compactionTableCapacity)
 		    hash = 0;
 		if (compactionTable[hash] == signature) {
-		    // make space for more valuable entry
+		    // make space for more valuable entry (or, in one of 255
+		    // cases, kill a random state needlessly)
 		    compactionTable[hash] = 0;
 		    --compactionTableEntries;
 		}
