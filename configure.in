@@ -46,7 +46,7 @@ if test x"$ac_cv_prog_gxx" = xyes; then
        ;;       
    esac
 elif test x$compaq_cxx = xyes; then
-   CXXFLAGS="$CXXFLAGS -O5 -fast -g3 -W -Wall -Wno-sign-compare -msg_display_tag -msg_disable intconlosbit -msg_disable boolexprconst -msg_disable signedonebitfld"
+   CXXFLAGS="$CXXFLAGS -fast -g3 -W -Wall -Wno-sign-compare -msg_display_tag -msg_disable intconlosbit -msg_disable boolexprconst -msg_disable signedonebitfld"
 fi
 
 AC_CHECK_HEADERS(hash_map ext/hash_map stdint.h)
