@@ -119,6 +119,7 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 #endif
 }
 
+#ifdef DO_REVERSE_SEARCH
 void Problem::calcCloseStates() {
     HashTable<RevState> states[REV_SEARCH_MAX_GOAL_DIST + 1];
     states[0].insertNew(RevState(myGoalPositions));
@@ -149,6 +150,7 @@ void Problem::calcCloseStates() {
 	    _revStates.insertIfBetter(*pState);
     cout << _revStates.size() << " reverse states" << endl;
 }
+#endif
 
 // store in dist[p] the minimum move distance to goal
 void Problem::calcDists(int dists[NUM_FIELDS], Pos goal) {
