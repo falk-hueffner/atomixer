@@ -29,13 +29,15 @@ using namespace std;
 
 class Atom {
 public:
-    Atom() : myID(0) { }
+    Atom();
     Atom(const string& s);
 
     bool isEmpty() const { return myID == 0; }
     bool isBlock() const { return myID == 1; }
 
     vector<string> toAscii() const;
+
+    bool operator<(const Atom& other) const;
 
 private:
     enum Connections { C_N  = (1 << 0), C_NE = (1 << 1),  C_E  = (1 << 2),
