@@ -32,6 +32,6 @@ enum Dir { NONE = 0, UP = -XSIZE, DOWN = XSIZE, LEFT = -1, RIGHT = 1 };
 
 ostream& operator <<(ostream& out, Dir dir);
 
-static const Dir dirs[4] = { UP, DOWN, LEFT, RIGHT };
+static const Dir DIRS[4] = { UP, DOWN, LEFT, RIGHT };
 
 #endif
