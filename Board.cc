@@ -41,7 +41,6 @@ Board::Board(istream& in) {
 	string value = line.substr(equalPos + 1);
 
 	lines[key] = value;
-	cout << key << " = »" << value << "«\n";
     }
 
     for (int y = 0; y < YSIZE; ++y) {
@@ -66,9 +65,9 @@ Board::Board(istream& in) {
 }
 
 ostream& operator<<(ostream& out, const Board& board) {
-        out << "      ";
-    for (int i = 1; i < Board::XSIZE - 1; ++i)
-	out << "   " << char(i - 1 + 'A');
+        out << "  ";
+    for (int i = 0; i < Board::XSIZE; ++i)
+	out << "   " << char(i + 'A');
     out << "\n   +";
     for (int i = 0; i < Board::XSIZE; ++i)
 	out << "---+";
