@@ -19,6 +19,21 @@
   $Id$
 */
 
+#undef DO_PREHEATING
+//#define DO_PREHEATING 1
+
+//#undef DO_MOVE_PRUNING
+#define DO_MOVE_PRUNING 1
+
+//#undef DO_MOVE_ORDERING
+//#define DO_MOVE_ORDERING 1
+
+#undef DO_CACHING
+//#define DO_CACHING 1
+
+//#undef DO_PARTIAL
+#define DO_PARTIAL 1
+
 #include <assert.h>
 #include <stdlib.h>
 
@@ -29,31 +44,37 @@
 #include "Dir.hh"
 #include "HashTable.hh"
 #include "IDAStar.hh"
-#include "IDAStarCacheState.hh"
-//#include "IDAStarState.hh"
 #include "Problem.hh"
+#include "State.hh"
 #include "Statistics.hh"
 #include "Timer.hh"
 #include "parameters.hh"
 
+#ifdef DO_CACHING
+#include "IDAStarCacheState.hh"
+#endif
+#ifdef DO_PARTIAL
+#include "BitVector.hh"
+#endif
+
 #define DEBUG0(x) do { } while (0)
 #define DEBUG1(x) cout << x << endl
 
-using namespace std;
-
-#undef DO_PREHEATING
-//#define DO_PREHEATING 1
-
-//#undef DO_MOVE_PRUNING
-#define DO_MOVE_PRUNING 1
-
-//#undef DO_MOVE_ORDERING
-//#define DO_MOVE_ORDERING 1
-
+#ifdef DO_CACHING
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
     (MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(IDAStarCacheState)));
+
+static int cacheGoalNr = -1;
+static HashTable<IDAStarCacheState> cachedStates;
+#endif
+#ifdef DO_PARTIAL
+static BitVector stateBits;
+static uint64_t numBitsSet;
+static uint64_t maxBitsSet = (MEMORY * 8) / 8;
+static bool doAddBits = true;
+#endif
 
 // global variables to describe current search state
 static int maxMoves;
@@ -62,13 +83,9 @@ bool isBlocking[NUM_FIELDS]; // FIXME try whether char is faster
 //static IDAStarState state;
 static deque<Move> solution;
 static Timer timer;
-static int cacheGoalNr = -1;
-//static HashTable<IDAStarCacheState> cachedStates(MAX_STATES, LOAD_FACTOR);
-static HashTable<IDAStarCacheState> cachedStates;
 
 static bool dfs(Move lastMove, const State& state, int minMovesLeft);
 deque<Move> IDAStar(int maxDist) {
-    //maxDist = 31;		// HACK HACK HACK for unitopia_06
     DEBUG0("IDAStar" << maxDist);
     moves = 0;
     ++Statistics::statesGenerated;
@@ -82,11 +99,8 @@ deque<Move> IDAStar(int maxDist) {
     for (int i = 0; i < NUM_ATOMS; ++i)
 	isBlocking[state.atomPosition(i)] = true;
 
-    
-    //DEBUG1(cachedStates.capacity() << " 1 " << MAX_STATES);
-    //if (cachedStates.capacity() != MAX_STATES)
-    //cachedStates = HashTable<IDAStarCacheState>(MAX_STATES, LOAD_FACTOR);
-    //DEBUG1(cachedStates.capacity() << " 2 " << MAX_STATES);
+
+#ifdef DO_CACHING
     if (Problem::goalNr != cacheGoalNr) {
 	DEBUG1("cache of wrong goal nr. Clearing.");
 	cacheGoalNr = Problem::goalNr;
@@ -110,6 +124,12 @@ deque<Move> IDAStar(int maxDist) {
 	     it != cachedStates.end(); ++it)
 	    ++((*it).minMovesFromStart); // to force re-expansion
     }
+#endif
+
+#ifdef DO_PARTIAL
+    stateBits.init(MEMORY * 8);
+#endif
+
     maxMoves = maxDist;
 
     Statistics::timer.start();
@@ -149,6 +169,7 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
     if (moves + minMovesLeft > maxMoves)
 	return false;
 
+#ifdef DO_CACHING
     // We know HashTable::find() only uses State::operator==(), and nothing
     // from IDAStarCacheState, so this cast works.
     IDAStarCacheState* cachedState =
@@ -169,11 +190,18 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
     if (cachedStates.size() < cachedStates.capacity())
 	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
 					      moves, minMovesLeft));
+#endif
 
     if ((Statistics::statesExpanded & 0xfffff) == 0) {
 	cout << state << " / " << maxMoves << endl
+#ifdef DO_CACHING
 	     << " cached: " << cachedStates.size()
 	     << " / " << cachedStates.capacity()
+#endif
+#ifdef DO_PARTIAL
+	     << " cached: " << numBitsSet
+	     << " / " << maxBitsSet
+#endif
 	     << " moves = " << moves
 	     << endl;
 	Statistics::print(cout);
@@ -228,6 +256,26 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 		State newState(state, move);
 		++Statistics::statesGenerated;
 		++Statistics::statesGeneratedAtDepth[maxMoves];
+
+#ifdef DO_PARTIAL
+		// ugh... 64 bit modulo is dog slow on i386...
+		uint64_t hash = newState.hash64() % stateBits.numBits();
+		DEBUG0(newState << " hashes to " << hash);
+		if (stateBits.isSet(hash)) {
+		    DEBUG0(" bit already set");
+		    continue;
+		}
+		if (doAddBits) {
+		    stateBits.set(hash);
+		    if (++numBitsSet > maxBitsSet) {
+			DEBUG1(" Bit hash table full");
+			doAddBits = false;
+		    }
+		}
+
+	    //assert(stateBits.isSet(hash));
+#endif
+
 		int newMinMovesLeft = newState.minMovesLeft();
 
 		switch (newMinMovesLeft - minMovesLeft) {
@@ -297,9 +345,11 @@ static bool dfs(Move lastMove, const State& state, int minMovesLeft) {
 	--moves;
     }
 
+#ifdef DO_CACHING
     if (cachedStates.size() < cachedStates.capacity())
 	cachedStates.insert(IDAStarCacheState(state.atomPositions(),
 					       moves, (maxMoves + 1) - moves));
-    // FIXME what is the correct value??
+#endif
+
     return false;
 }

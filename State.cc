@@ -163,13 +163,39 @@ vector<Move> State::rmoves() const {
 size_t State::hash() const {
     size_t result = 0;
 
-    // Perl uses 33; try that eventually, might be more magic.
     for (int i = 0; i < NUM_ATOMS; ++i)
 	result = 97 * result + atomPositions_[i];
 
     return result;
 }
 
+uint64_t State::hash64() const {
+    /*
+    uint64_t perl = 0;
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	perl = 33 * perl + atomPositions_[i];
+    perl += (perl >> 5);
+    
+    uint64_t python = atomPositions_[0] << 7;
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	python = (1000003 * python) ^ atomPositions_[i];
+    */
+    // "one-at-a-time hash"
+    uint64_t hash = 0;
+    for (int i = 0; i < NUM_ATOMS; ++i) {
+	hash += atomPositions_[i];
+	hash += (hash << 10);
+	hash ^= (hash >> 6);
+    }
+    
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+
+    return hash;
+}
+
+ 
 // canonicallify pairs: the first one should always have the lower
 // position. This avoids storing logically identical states twice in the
 // hash table.
