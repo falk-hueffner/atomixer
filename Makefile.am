@@ -6,6 +6,7 @@ bin_PROGRAMS = atomixer
 
 atomixer_SOURCES = \
 	AStar2.cc	\
+	BitVector.hh	\
 	AStar2.hh	\
 	AStarState.cc	\
 	AStarState.hh	\
