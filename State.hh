@@ -42,6 +42,9 @@ public:
     bool operator<(const State& other) const; // to put into STL set
     bool operator==(const State& other) const;
 
+    const unsigned char* atomPositions() const { return myAtomPositions; }
+
+
     vector<Move> moves() const;
     int minMovesLeft() const;
 
