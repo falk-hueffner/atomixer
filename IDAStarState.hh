@@ -38,9 +38,9 @@ public:
     IDAStarState(const State& state)
 	: State(state), moves_(0) {
 	for (Pos pos = 0; pos != Pos::end(); ++pos)
-	    isBlocking_[pos.fieldNumber()] = Problem::isBlock(pos);
+	    fields_[pos.fieldNumber()] = Problem::isBlock(pos) ? BLOCK : EMPTY;
 	for (int i = 0; i < NUM_ATOMS; ++i)
-	    isBlocking_[atomPosition(i)] = true;
+	    fields_[atomPosition(i)] = i;
 	
 	calcMinMovesLeft();
     }
@@ -52,35 +52,36 @@ public:
 
     void apply(const Move& move) {
 	State::apply(move);
-	isBlocking_[move.pos1().fieldNumber()] = false;
-	isBlocking_[move.pos2().fieldNumber()] = true;
+	fields_[move.pos1().fieldNumber()] = EMPTY;
+	fields_[move.pos2().fieldNumber()] = move.atomNr();
 	calcMinMovesLeft();
 	++moves_;
     }
     void apply(const Move& move, int minMovesLeft) {
 	State::apply(move);
-	isBlocking_[move.pos1().fieldNumber()] = false;
-	isBlocking_[move.pos2().fieldNumber()] = true;
+	fields_[move.pos1().fieldNumber()] = EMPTY;
+	fields_[move.pos2().fieldNumber()] = move.atomNr();;
 	minMovesLeft_ = minMovesLeft;
 	++moves_;
     }
     void undo(const Move& move, int minMovesLeft) {
 	State::undo(move);
-	isBlocking_[move.pos1().fieldNumber()] = true;
-	isBlocking_[move.pos2().fieldNumber()] = false;
+	fields_[move.pos1().fieldNumber()] = move.atomNr();
+	fields_[move.pos2().fieldNumber()] = EMPTY;
 	minMovesLeft_ = minMovesLeft;
 	--moves_;
     }
 
-    bool isBlocking(Pos pos) const { return isBlocking_[pos.fieldNumber()]; }
+    bool isBlocking(Pos pos) const { return fields_[pos.fieldNumber()] != EMPTY; }
 
 private:
+    enum { EMPTY = NUM_ATOMS, BLOCK = NUM_ATOMS + 1 };
     void undo(const Move& move); // shouldn't be used
 
     void calcMinMovesLeft() { minMovesLeft_ = State::minMovesLeft(); }
     unsigned int moves_;
     unsigned int minMovesLeft_;
-    bool isBlocking_[NUM_FIELDS]; // FIXME try whether char is faster
+    int fields_[NUM_FIELDS];	// FIXME try whether char is faster
 };
 
 #endif
