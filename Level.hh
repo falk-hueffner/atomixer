@@ -23,6 +23,7 @@
 #define LEVEL_HH
 
 #include <iosfwd>
+#include <vector>
 
 #include "Board.hh"
 
@@ -30,6 +31,13 @@ using namespace std;
 
 class Level {
 public:
+    struct Pos {
+	Pos() { }		// leave uninitialized
+	Pos(int nx, int ny) : x(nx), y(ny) { }
+
+	int x, y;
+    };
+
     Level(istream& in);
 
     const Board& startBoard() const { return myStartBoard; }
@@ -38,9 +46,13 @@ public:
     void printStats() const;
 
 private:
+    void findGoalPositions();
+
+    vector<Pos> myGoalPositions;
     Board myStartBoard, myGoal;
 };
 
 ostream& operator<<(ostream& out, const Level& level);
+ostream& operator<<(ostream& out, const Level::Pos& pos);
 
 #endif

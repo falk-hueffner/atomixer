@@ -29,14 +29,18 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    assert(argc == 2);
-    ifstream levelStream(argv[1]);
-    assert(levelStream);
-    Level level(levelStream);
+    assert(argc >= 2);
 
-    //cout << level << endl;
-    cout << argv[1] << '\t';
-    level.printStats();
-    cout << endl;
+    cout << "Level           |#A|#G|1×|2×|3×|4×|5×|\n"
+	 << "----------------+--+--+--+--+--+--+--+\n";
+    for (int i = 1; i < argc; ++i) {
+	cout << argv[i] << '\t';
+	ifstream levelStream(argv[i]);
+	assert(levelStream);
+	Level level(levelStream);
+	level.printStats();
+	cout << endl;
+    }
+
     return 0;
 }

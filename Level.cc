@@ -41,6 +41,25 @@ Level::Level(istream& in) {
 
     myStartBoard = Board(lines, "feld", 2);
     myGoal       = Board(lines, "mole", 1);
+    findGoalPositions();
+}
+
+void Level::findGoalPositions() {
+    for (int dy = 0; dy < Board::YSIZE; ++dy) {
+	for (int dx = 0; dx < Board::XSIZE; ++dx) {
+	    bool ok = true;
+	    for (int y = 0; y < Board::YSIZE; ++y) {
+		for (int x = 0; x < Board::XSIZE; ++x) {
+		    if (goal().field(x, y).isAtom()
+			&& (x + dx >= Board::XSIZE || y + dy >= Board::YSIZE
+			    || startBoard().field(x + dx, y + dy).isBlock()))
+			ok = false;
+		}
+	    }
+	    if (ok)
+		myGoalPositions.push_back(Pos(dx, dy));
+	}
+    }
 }
 
 void Level::printStats() const {
@@ -55,31 +74,31 @@ void Level::printStats() const {
 	}
     }
     map<int, int> bucketSizes;
-    cout << "Atoms: " << setw(2) << numAtoms <<  '|';
+    //cout << "Atoms: " << setw(2) << numAtoms <<  '|';
+    cout << '|' << setw(2) << numAtoms <<  '|'
+	 << setw(2) << myGoalPositions.size() << '|';
     for (map<Atom, int>::const_iterator p = atomCounts.begin();
 	 p != atomCounts.end(); ++p) {
 	++bucketSizes[p->second];
     }
-    //for (map<int, int>::const_iterator p = bucketSizes.begin();
-    //p != bucketSizes.end(); ++p) {
-    for (int i = 1; i <= 6; ++i)
+
+    for (int i = 1; i <= 5; ++i) { // no test level with > 5 yet...
 	if (bucketSizes[i] == 0)
 	    cout <<  "  |";
 	else
 	    cout << setw(2) << bucketSizes[i] << '|';
-    /*
-	if (p->first == 1)
-	    cout << "\tunique:\t";
-	else if (p->first == 2)
-	    cout << "\ttwice:\t";
-	else if (p->first == 3)
-	    cout << "\tthrice:\t";
-	else
-	    cout << '\t' << p->first << " times:\t";
-	cout << -> second;
-    */
+    }
+
+    //cout << "Goal positions: " << myGoalPositions.size() << endl;
+    //for (int i = 0; i < myGoalPositions.size(); ++i)
+    //cout << '\t' << myGoalPositions[i] << endl;
+    
 }
 
 ostream& operator<<(ostream& out, const Level& level) {
     return out << level.goal() << level.startBoard();
+}
+
+ostream& operator<<(ostream& out, const Level::Pos& pos) {
+    return out << '(' << pos.x << ", " << pos.y << ')';
 }
