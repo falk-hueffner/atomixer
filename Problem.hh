@@ -25,6 +25,7 @@
 class Level;
 class Board;
 
+#include "Atom.hh"
 #include "Pos.hh"
 #include "Size.hh"
 
@@ -42,6 +43,7 @@ public:
     static int goalDist(int atomNr, int fieldNr) {
 	return goalDists[atomNr][fieldNr];
     }
+    static Atom atom(int nr) { return atoms[nr]; }
 
 private:
     static void calcDists(int dists[NUM_FIELDS], Pos goal);
@@ -50,6 +52,7 @@ private:
     static Pos myStartPositions[NUM_ATOMS];
     static Pos myGoalPositions[NUM_ATOMS];
     static int goalDists[NUM_ATOMS][NUM_FIELDS];
+    static Atom atoms[NUM_ATOMS];
 };
 
 #endif
