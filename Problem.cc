@@ -21,13 +21,18 @@
 
 #include <assert.h>
 
+#include <queue>
+
+#include "Dir.hh"
 #include "Level.hh"
 #include "Problem.hh"
+
+using namespace std;
 
 bool Problem::myIsBlock[NUM_FIELDS];
 Pos Problem::myStartPositions[NUM_ATOMS];
 Pos Problem::myGoalPositions[NUM_ATOMS];
-
+int Problem::goalDists[NUM_ATOMS][NUM_FIELDS];
 
 void Problem::setLevel(const Level& level) {
     int numAtoms = 0;
@@ -54,4 +59,49 @@ void Problem::setGoal(const Level& level, int goalPosNr) {
 	assert(realGoalPos.ok());
 	myGoalPositions[atomNo++] = realGoalPos;
     }
+
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	calcDists(goalDists[i], myGoalPositions[i]);
+}
+
+// store in dist[p] the minimum move distance to goal
+void Problem::calcDists(int dists[NUM_FIELDS], Pos goal) {
+    for (int i = 0; i < NUM_FIELDS; ++i)
+	dists[i] = 100000;
+
+    dists[goal.fieldNumber()] = 0;
+
+    queue<Pos> q;
+
+    q.push(goal);
+
+    while (!q.empty()) {
+	Pos p = q.front();
+	int dist = dists[p.fieldNumber()];
+	for (int dirNo = 0; dirNo < 4; ++dirNo) {
+	    Dir dir = dirs[dirNo];
+	    for (Pos tp = p + dir; !myIsBlock[tp.fieldNumber()]; tp += dir) {
+		if (dists[tp.fieldNumber()] > dist + 1) {
+		    dists[tp.fieldNumber()] = dist + 1;
+		    q.push(tp);
+		}
+	    }
+	}
+	q.pop();
+    }
+
+    /*
+    cout << "Distances to " << goal << ":\n";
+    for (int y = 0; y < YSIZE; ++y) {
+	for (int x = 0; x < XSIZE; ++x) {
+	    //cout << dists[Pos(x, y).fieldNumber()] << ' ';
+	    int d = dists[Pos(x, y).fieldNumber()];
+	    if (d < 100000)
+		cout << d << ' ';
+	    else
+		cout << '.' << ' ';
+	}
+	cout << endl;
+    }
+    */
 }

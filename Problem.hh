@@ -41,12 +41,17 @@ public:
     static const Pos* startPositions() { return myStartPositions; }
     static Pos startPosition(int nr) { return myStartPositions[nr]; }
     static Pos goalPosition(int nr) { return myGoalPositions[nr]; }
+    static int goalDist(int atomNr, int fieldNr) {
+	return goalDists[atomNr][fieldNr];
+    }
 
 private:
+    static void calcDists(int dists[NUM_FIELDS], Pos goal);
+
     static bool myIsBlock[NUM_FIELDS];
     static Pos myStartPositions[NUM_ATOMS];
     static Pos myGoalPositions[NUM_ATOMS];
-    //static int goalDists[NUM_ATOMS][NUM_FIELDS];
+    static int goalDists[NUM_ATOMS][NUM_FIELDS];
 };
 
 #endif

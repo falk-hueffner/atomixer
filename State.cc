@@ -65,12 +65,8 @@ vector<Move> State::moves() const {
 
 int State::minMovesLeft() const {
     int minMovesLeft = 0;
-    //cout << "--minMovesLeft-- " << *this << endl;
-    for (int i = 0; i < NUM_ATOMS; ++i) {
-	if (myAtomPositions[i] != Problem::goalPosition(i).fieldNumber())
-	    ++minMovesLeft;
-    }
-    //cout << "--end minMovesLeft-- " << minMovesLeft << endl;
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	minMovesLeft += Problem::goalDist(i, myAtomPositions[i]);
 
     return minMovesLeft;
 }
