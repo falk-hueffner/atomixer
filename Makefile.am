@@ -13,6 +13,8 @@ atomixer_SOURCES = \
 	Board.hh	\
 	Dir.cc		\
 	Dir.hh		\
+	IDAStar.cc	\
+	IDAStar.hh	\
 	Level.cc	\
 	Level.hh	\
 	Move.cc		\
