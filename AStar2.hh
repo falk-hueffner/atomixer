@@ -31,9 +31,6 @@ class State;
 
 #include "Move.hh"
 
-// maximum amount of memory to be used
-static const unsigned int MEMORY = 300 * 1024 * 1024;
-
 std::deque<Move> aStar2(const State& start, int maxDist);
 
 #endif
