@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& out, const Timer& timer) {
     int days = seconds / (60*60*24);
     seconds -= days * (60*60*24);
     int hours = seconds / (60*60);
-    seconds -= hours / (60*60);
+    seconds -= hours * (60*60);
     int minutes = seconds / 60;
     seconds -= minutes * 60;
 
