@@ -74,16 +74,18 @@ extern "C" {
 }
 
 int main(int argc, char* argv[]) {
+    try {
     assert(argc >= 2);
 
     if (argc > 2) {		// info
 	cout << "Level                   |#A|#G|1x|2x|nx|\n"
-	     << "------------------------+--+--+--+--+--+\n";
+	        "------------------------+--+--+--+--+--+\n";
 	for (int i = 1; i < argc; ++i) {
 	    cout << argv[i] << '\t';
 	    ifstream levelStream(argv[i]);
 	    assert(levelStream);
 	    Level level(levelStream);
+	    //cout << level;
 	    level.printStats();
 	    cout << endl;
 	}
@@ -107,8 +109,8 @@ int main(int argc, char* argv[]) {
 	levelName = levelName.substr(levelName.find('/') + 1);
     cout << "Solving " << levelName << "...\n";
 
-    int knownLowerBound = 0;
-    //int knownLowerBound = 7;
+    //int knownLowerBound = 0;
+    int knownLowerBound = 7;
 
     /*
     ifstream statStream("stats");
@@ -144,11 +146,23 @@ int main(int argc, char* argv[]) {
 #endif
 	    if (moves.size() > 0) {
 		State state = start;
+#ifndef DO_BACKWARD_SEARCH
 		for (deque<Move>::const_iterator m = moves.begin();
 		     m != moves.end(); ++m) {
 		    state = State(state, *m);
 		    //cout << Board(state);
 		}
+#else
+		cout << "Found solution.\n"
+		     << Board(state);
+		// Bug in g++: const_reverse_iterator doesn't work
+		for (deque<Move>::reverse_iterator m = moves.rbegin();
+		     m != moves.rend(); ++m) {
+		    cout << *m << endl;
+		    state.undo(*m);
+		    cout << Board(state);
+		}
+#endif
 		cout << "Final board:\n"
 		     << Board(state)
 		     << "Solution in " << moves.size() << " moves.\n";
@@ -185,5 +199,8 @@ int main(int argc, char* argv[]) {
 	    cout << "New lower bound found for " << levelName
 		 << ": " << maxMoves + 1 << endl;
 	}
+    }
+    } catch (const std::exception& e) {
+	cout << "Caught exception: " << e.what() << endl;
     }
 }
