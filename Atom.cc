@@ -25,7 +25,7 @@
 
 using namespace std;
 
-const char Atom::chars[] = { ' ', '#', 'H', 'C', 'O', 'N', '?', 'F' };
+const char Atom::chars[] = { ' ', '#', 'H', 'C', 'O', 'N', '?', 'F', 'L' };
 
 const int Atom::coords[][2] = {{0, 1}, {0, 2}, {1, 2}, {2, 2},
 			       {2, 1}, {2, 0}, {1, 0}, {0, 0}};
@@ -40,8 +40,8 @@ const char Atom::bindings[][4] = {{' ', '|',  '"', '3'},
 				  {' ', '\\'          }};
 
 /*
-  1  2  3  4  5  6  o        A
-  H  C  O  N  ?  F  crystal  horizontal floating connection
+  1  2  3  4  5  6  7  o        A
+  H  C  O  N  ?  F  Cl crystal  horizontal floating connection
 
   Katomic atom description:
   h a b    A      E

@@ -23,7 +23,7 @@ if test x"$ac_cv_prog_gxx" = xyes; then
    CXXFLAGS="$CXXFLAGS -W -Wall -Wno-sign-compare -ansi -pedantic"
 else
    # Hack for Compaq C++
-   CXXFLAGS="$CXXFLAGS -D__USE_STD_IOSTREAM -W -Wall -Wno-sign-compare"
+   CXXFLAGS="$CXXFLAGS -D__USE_STD_IOSTREAM -fast -g3 -W -Wall -Wno-sign-compare"
 fi
 
 AC_OUTPUT(Makefile)
