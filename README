@@ -1,0 +1,12 @@
+Adapt memory in Size.hh.in.
+
+Configure with
+
+./configure
+
+Run with e. g.:
+
+./run.sh levels/katomic_01
+
+Most of the source will be recompiled for each level.
+
