@@ -1,11 +1,14 @@
 .deps
+ChangeLog
 Makefile
 Makefile.in
 aclocal.m4
 atomixer
+aux
 config.cache
 config.log
 config.status
 configure
+cxx_repository
 gmon.out
-aux
+stats
