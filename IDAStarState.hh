@@ -53,8 +53,10 @@ public:
 	isBlocking_[move.pos2().fieldNumber()] = true;
 	calcMinMovesLeft();
     }
-    void undo(const Move& move) {
-	State::undo(move);
+    void undo(const Move& move, const unsigned char oldatoms[NUM_ATOMS]) {
+	//State::undo(move);
+	for (int i = 0; i < NUM_ATOMS; ++i)
+	    atomPositions_[i] = oldatoms[i];
 	isBlocking_[move.pos1().fieldNumber()] = true;
 	isBlocking_[move.pos2().fieldNumber()] = false;
 	calcMinMovesLeft();

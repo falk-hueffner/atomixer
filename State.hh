@@ -49,14 +49,14 @@ public:
     bool operator==(const State& other) const;
 
     void apply(const Move& move);
-    void undo(const Move& move);
+    //void undo(const Move& move); // not easily implementable with canonicallification
 
     std::vector<Move> moves() const;
     std::vector<Move> rmoves() const;
 
     size_t hash() const;
 
-private:
+protected:
     void canonicallify(int atomNr);
 
     unsigned char atomPositions_[NUM_ATOMS];

@@ -49,12 +49,14 @@ void State::apply(const Move& move) {
     canonicallify(atomNr);
 }
 
+/*
 void State::undo(const Move& move) {
     int atomNr = move.atomNr();
     atomPositions_[atomNr] = move.pos1().fieldNumber();
 
     canonicallify(atomNr);
 }
+*/
 
 int State::minMovesLeft() const {
     int minMovesLeft = 0;
