@@ -22,11 +22,7 @@
 #ifndef STATISTICS_HH
 #define STATISTICS_HH
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#else
-typedef long long int64_t;
-#endif
+#include "stdint.h"
 
 #include <iosfwd>
 

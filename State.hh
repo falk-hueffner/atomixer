@@ -22,11 +22,7 @@
 #ifndef STATE_HH
 #define STATE_HH
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#else
-typedef unsigned long long uint64_t;
-#endif
+#include "stdint.h"
 
 #include <iostream>
 #include <vector>

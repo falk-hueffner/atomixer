@@ -19,11 +19,7 @@
   $Id$
 */
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#else
-typedef long long int64_t;
-#endif
+#include "stdint.h"
 
 #include <deque>
 #include <iostream>
