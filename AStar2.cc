@@ -51,19 +51,25 @@ unsigned long nextPrime(unsigned long n) {
 
 static const double LOAD_FACTOR = 1.5;
 
+static const unsigned int MEMORY = 900000000;
+static const unsigned int MAX_STATES = (unsigned int)(MEMORY / (sizeof(int) * LOAD_FACTOR + sizeof(State2)));
+static const unsigned int MAX_HASHES = (unsigned int)(MAX_STATES * LOAD_FACTOR);
+
 vector<State2> states;
 vector<int> hashTable;
 int minMinTotalMoves;
 int firstOpen;
 int searchIndex;
+int numOpen;
 
 void rehash() {
     int newSize = nextPrime(hashTable.size() + 1);
     DEBUG1("resizing hash table from " << hashTable.size());
     hashTable.clear();
+    DEBUG1("cleared ");
     hashTable.resize(newSize);
     DEBUG1(" to " << hashTable.size()
-	 << " (" << states.size() - 1 << " states)");
+	   << " (" << states.size() - 1 << " states)");
     int conflicts = 0;
     for (int i = 1; i < states.size(); ++i) {
 	unsigned int hash = states[i].hash() % hashTable.size();
@@ -84,11 +90,24 @@ void hashInsert(const State2& state) {
     while (true) {
 	if (hashTable[hash] == 0) {
 	    DEBUG0(" hash = " << hash << " empty. Putting it there.");
-	    states.push_back(state);
+	    //try {
+		states.push_back(state);
+		++numOpen;
+		/*
+	    } catch (bad_alloc) {
+		// we're running low on memory, and STL tried to double the
+		// capacity or so.
+		DEBUG1("bad_alloc catched. Trying to grow just a bit.");
+		DEBUG1("old capacity: " << states.capacity());
+		states.reserve(states.capacity() + 20000000);
+		states.push_back(state);
+		DEBUG1("new capacity: " << states.capacity());
+	    }
+	    */
 	    DEBUG0(" pushed " << state);
 	    hashTable[hash] = states.size() - 1;
 	    if (hashTable.size() < LOAD_FACTOR * states.size()) {
-		DEBUG0(" must rehash.");
+		DEBUG1(" must rehash.");
 		rehash();
 	    }
 	    DEBUG0(" returning.");
@@ -98,11 +117,12 @@ void hashInsert(const State2& state) {
 	    DEBUG0(" hash = " << hash << ": " << oldState2 << " already there.");
 	    if (oldState2 == state) {
 		DEBUG0(" hash = " << hash << ": "
-		      << oldState2 << " equals new state.");
+		       << oldState2 << " equals new state.");
 		if (state.numMoves < oldState2.numMoves) {
-		    DEBUG0(" New way to this State2 is shorter.\n");
+		    DEBUG0(" New way to this state is shorter.\n");
 		    oldState2.numMoves = state.numMoves;
 		    oldState2.isOpen = true;
+		    ++numOpen;
 		    if (hashTable[hash] < firstOpen) {
 			firstOpen = hashTable[hash];
 		    }
@@ -204,15 +224,20 @@ int findBest2(int maxMoves) {
 }
 
 deque<Move> aStar2(const State2& start, int maxMoves) {
+    DEBUG1("MAX_STATES = " << MAX_STATES);
+    DEBUG1("MAX_HASHES = " << MAX_HASHES);
     states.clear();
     states.push_back(State2());	// 0 reserved for 'empty'
+    states.reserve(MAX_STATES);
     hashTable.clear();
     //hashTable.resize(PRIME_LIST[0]);
-    hashTable.resize(98317);
+    //hashTable.resize(98317);
+    hashTable.resize(MAX_HASHES);
 
     minMinTotalMoves = 0;
     firstOpen = 1;
     searchIndex = firstOpen;
+    numOpen = 0;
     
     static long long totalNodes = 0;
     long counter = 0;
@@ -229,13 +254,17 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 	//State2& best = states[bestIndex];
 	DEBUG0("best: " << states[bestIndex]);
 	states[bestIndex].isOpen = false;
+	--numOpen;
 
-	if (counter++ % 10000 == 0)
-	    cout << "best:\n" << states[bestIndex]
+	if (counter++ % 100000 == 0)
+	    cout << "best: " << states[bestIndex]
+		 << "\n  open: " << numOpen
 		 << "\nstates: " << states.size()
-		 << " \t(" << (states.size() * sizeof(State2)) / 1000000 
+		 << " \t(" << (states.size() * sizeof(State2)) / 1000000
+		 << "M/" << (states.capacity() * sizeof(State2)) / 1000000
 		 << "M)\nhashes: " << hashTable.size()
-		 << " \t(" << (hashTable.size() * sizeof(int)) / 1000000
+		 << " \t(" << (states.size() * sizeof(int)) / 1000000
+		 << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
 		 << "M)\n";
 
 	vector<Move> moves = states[bestIndex].moves();
@@ -252,8 +281,10 @@ deque<Move> aStar2(const State2& start, int maxMoves) {
 		cout << "Found solution.\n"
 		     << "\nstates: " << states.size()
 		     << " \t(" << (states.size() * sizeof(State2)) / 1000000
+		     << "M/" << (states.capacity() * sizeof(State2)) / 1000000
 		     << "M)\nhashes: " << hashTable.size()
-		     << " \t(" << (hashTable.size() * sizeof(int)) / 1000000
+		     << " \t(" << (states.size() * sizeof(int)) / 1000000
+		     << "M/" << (hashTable.capacity() * sizeof(int)) / 1000000
 		     << "M)\n";
 		deque<Move> solution;
 		State2* pNode = &states[bestIndex];
