@@ -63,6 +63,7 @@ public:
     inline std::vector<Move> rmoves() const;
 
     inline size_t hash() const;
+    inline size_t hash2() const;
     inline uint64_t hash64_1() const;
     inline uint64_t hash64_2() const;
 

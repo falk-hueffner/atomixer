@@ -61,6 +61,11 @@ static uint64_t numBitsSet;
 static const uint64_t maxBitsSet = (MEMORY * 8) / 16;
 static bool doAddBits;
 #endif
+#ifdef DO_COMPACTION
+static uint8_t* compactionTable;
+static size_t compactionTableCapacity;
+static size_t compactionTableEntries;
+#endif
 
 // global variables to describe current search state
 static int maxMoves;
@@ -117,6 +122,13 @@ deque<Move> IDAStar(int maxDist) {
     stateBits.init(MEMORY * 8);
     numBitsSet = 0;
     doAddBits = true;
+#endif
+
+#ifdef DO_COMPACTION
+    delete[] compactionTable;
+    compactionTableCapacity = MEMORY;
+    compactionTableEntries = 0;
+    compactionTable = new uint8_t[compactionTableCapacity];
 #endif
 
     maxMoves = maxDist;
@@ -193,6 +205,12 @@ static bool dfs(const Move& lastMove) {
 #ifdef DO_PARTIAL
 	     << " cached: " << numBitsSet
 	     << " (" << (double(numBitsSet) * 100.0) / double(maxBitsSet)
+	     << "%)"
+#endif
+#ifdef DO_COMPACTION
+	     << " cached: " << compactionTableEntries
+	     << " (" << (double(compactionTableEntries) * 100.0)
+		/ double(compactionTableCapacity)
 	     << "%)"
 #endif
 	     << " moves = " << state.moves()
@@ -315,6 +333,39 @@ static bool dfs(const Move& lastMove) {
 			DEBUG1(" Bit hash table full");
 			doAddBits = false;
 		    }
+		}
+	    }
+#endif
+#ifdef DO_COMPACTION
+	    {
+		// hash() works much worse than hash2() ???
+		//size_t hash  = (state.hash() + state.moves())
+		//		% compactionTableCapacity;
+		size_t hash  = (state.hash2() + state.moves())
+				% compactionTableCapacity;
+		size_t signature = state.hash() % 255 + 1;
+		if (compactionTable[hash] == signature)
+		    goto skip;
+
+		// perhaps it is the table with $g - 1$?
+		size_t hashg = hash == 0
+		    ? compactionTableCapacity - 1 : hash - 1;
+		
+		if (compactionTable[hashg] == signature)
+		    goto skip;
+
+		// assume state is new.
+		if (compactionTable[hash] == 0)
+		    ++compactionTableEntries;
+		compactionTable[hash] = signature;
+
+		// check if it is already in the table with $g + 1$
+		if (++hash == compactionTableCapacity)
+		    hash = 0;
+		if (compactionTable[hash] == signature) {
+		    // make space for more valuable entry
+		    compactionTable[hash] = 0;
+		    --compactionTableEntries;
 		}
 	    }
 #endif
