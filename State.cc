@@ -21,7 +21,7 @@
 
 #include <algorithm>
 
-#include "algorithm.hh"
+#include "parameters.hh"
 #include "Problem.hh"
 #include "State.hh"
 
