@@ -32,3 +32,12 @@ AStarState::AStarState(const AStarState& state, const Move& move)
     isOpen = true;
     calcMinMovesLeft();
 }
+
+std::ostream& operator<<(std::ostream& out, const AStarState& state) {
+    for (int i = 0; i < NUM_ATOMS; ++i)
+	out << Pos(state.atomPosition(i)) << ' ';
+
+    return out << state.numMoves
+	       << '+' << state.minMovesLeft()
+	       << '=' << state.minTotalMoves();
+}
