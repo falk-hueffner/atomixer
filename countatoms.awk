@@ -1,11 +1,14 @@
 #! /usr/bin/awk -f
 
 /^feld/ {
+    ++height
     sub(/^feld_.*=/, "", $0);
     for(i = 1; i <= length($0); ++i) {
 	l = substr($0, i, 1);
 	if (l ~ /[0-9a-z]/)
 	    ++counts[l];
+	if (length($0) > width)
+	    width = length($0)
     }
 }
 
@@ -19,5 +22,5 @@ END {
 	    twice += 2;
 	else multi += counts[x];
     
-    print once, twice, multi;
+    print width, height, (width * height > 256), once, twice, multi;
 }
