@@ -1,5 +1,5 @@
 /*
-  atomixer -- Atoimx puzzle solver
+  atomixer -- Atomix puzzle solver
   Copyright (C) 2000 Falk Hueffner
 
   This program is free software; you can redistribute it and/or modify it
@@ -19,34 +19,25 @@
   $Id$
 */
 
-#ifndef LEVEL_HH
-#define LEVEL_HH
+#include <assert.h>
 
-#include <iosfwd>
-#include <vector>
+#include "Level.hh"
+#include "Problem.hh"
 
-#include "Board.hh"
-#include "Pos.hh"
-
-using namespace std;
-
-class Level {
-public:
-    Level(istream& in);
-
-    const Board& startBoard() const { return myStartBoard; }
-    const Board& goal() const { return myGoal; }
-
-    void printStats() const;
-    Pos goalPos(int goalPosNr) const { return myGoalPositions[goalPosNr]; }
-
-private:
-    void findGoalPositions();
-
-    vector<Pos> myGoalPositions;
-    Board myStartBoard, myGoal;
-};
-
-ostream& operator<<(ostream& out, const Level& level);
-
-#endif
+Problem::Problem(const Level& level, int goalPosNr) {
+    Pos d = level.goalPos(goalPosNr);
+    int dx = d.x(), dy = d.y();
+    for (int x = 0; x < XSIZE; ++x) {
+	for (int y = 0; y < YSIZE; ++y) {
+	    const Atom& atom = level.startBoard().field(x, y);
+	    if (atom.isAtom()) {
+		myStartPositions.push_back(Pos(x, y));
+		Pos goalPos = level.goal().find(atom);
+		Pos realGoalPos = Pos(goalPos.x() + dx, goalPos.y() + dy);
+		assert(realGoalPos.ok());
+		myGoalPositions.push_back(realGoalPos);
+	    }
+	    myIsBlock[Pos(x, y).fieldNumber()] = atom.isBlock();
+	}
+    }
+}

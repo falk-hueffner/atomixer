@@ -1,5 +1,5 @@
 /*
-  atomixer -- Atoimx puzzle solver
+  atomixer -- Atomix puzzle solver
   Copyright (C) 2000 Falk Hueffner
 
   This program is free software; you can redistribute it and/or modify it
@@ -19,34 +19,33 @@
   $Id$
 */
 
-#ifndef LEVEL_HH
-#define LEVEL_HH
+#ifndef PROBLEM_HH
+#define PROBLEM_HH
 
-#include <iosfwd>
 #include <vector>
 
-#include "Board.hh"
+class Level;
+class Board;
+
 #include "Pos.hh"
 
 using namespace std;
 
-class Level {
+class Problem {
 public:
-    Level(istream& in);
+    Problem(const Level& level, int goalPosNr);
 
-    const Board& startBoard() const { return myStartBoard; }
-    const Board& goal() const { return myGoal; }
-
-    void printStats() const;
-    Pos goalPos(int goalPosNr) const { return myGoalPositions[goalPosNr]; }
+    bool isBlock(Pos p) const { return myIsBlock[p.fieldNumber()]; }
+    Pos startPosition(int nr) const { return myStartPositions[nr]; }
+    Pos goalPosition(int nr) const { return myGoalPositions[nr]; }
+    int numAtoms() const { return myStartPositions.size(); }
 
 private:
-    void findGoalPositions();
-
+    bool myIsBlock[NUM_FIELDS];
+    //Board myBoard;
+    //vector<Atom> myAtoms;
+    vector<Pos> myStartPositions;
     vector<Pos> myGoalPositions;
-    Board myStartBoard, myGoal;
 };
-
-ostream& operator<<(ostream& out, const Level& level);
 
 #endif

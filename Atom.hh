@@ -39,6 +39,7 @@ public:
     vector<string> toAscii() const;
 
     bool operator<(const Atom& other) const;
+    bool operator==(const Atom& other) const;
 
 private:
     enum Connections { C_N  = (1 << 0), C_NE = (1 << 1),  C_E  = (1 << 2),

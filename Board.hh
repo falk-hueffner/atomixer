@@ -38,6 +38,7 @@ public:
     Board(map<string, string> lines, string key, int len);
 
     const Atom& field(int x, int y) const { return myFields[x][y]; }
+    Pos find(const Atom& atom) const;
 
 private:
     void floodFill(int x, int y);

@@ -26,5 +26,5 @@
 using namespace std;
 
 ostream& operator<<(ostream& out, const Pos& pos) {
-    return out << '(' << pos.x() << ", " << pos.y() << ')';
+    return out << '(' << char(pos.x() + 'A') << pos.y() << ')';
 }

@@ -17,5 +17,9 @@ atomixer_SOURCES = \
 	Move.hh		\
 	Pos.cc		\
 	Pos.hh		\
+	Problem.cc	\
+	Problem.hh	\
 	Size.hh		\
+	State.cc	\
+	State.hh	\
 	main.cc
