@@ -52,6 +52,7 @@ public:
     static Pos goalPosition(int nr) { return myGoalPositions[nr]; }
 #endif
     static int numIdentical(int nr) { return myNumIdentical[nr]; }
+    static int firstIdentical(int nr) { return myFirstIdentical[nr]; }
     static int goalDist(int atomNr, Pos pos) {
 	return goalDists[atomNr][pos.fieldNumber()];
     }
@@ -71,7 +72,8 @@ private:
     static bool myIsBlock[NUM_FIELDS];
     static Pos myStartPositions[NUM_ATOMS];
     static Pos myGoalPositions[NUM_ATOMS];
-    static int myNumIdentical[NUM_ATOMS + 100];
+    static int myNumIdentical[NUM_ATOMS];
+    static int myFirstIdentical[NUM_ATOMS];
     static int goalDists[NUM_ATOMS][NUM_FIELDS];
     static Atom atoms[NUM_ATOMS];
 #ifdef DO_REVERSE_SEARCH
