@@ -19,16 +19,28 @@
   $Id$
 */
 
-#include <iostream>
+#ifndef BOARD_HH
+#define BOARD_HH
+
+#include <iosfwd>
 
 #include "Atom.hh"
-#include "Board.hh"
 
 using namespace std;
 
-int main() {
-    Board board(cin);
+// a complete representation of a board state, useful for I/O
+class Board {
+public:
+    Board(istream& in);
 
-    cout << board << endl;
-    return 0;
-}
+    static const int XSIZE = 16, YSIZE = 15;
+
+    const Atom& field(int x, int y) const { return myFields[x][y]; }
+
+private:
+    Atom myFields[XSIZE][YSIZE];
+};
+
+ostream& operator<<(ostream& out, const Board& board);
+
+#endif

@@ -4,4 +4,9 @@ AUTOMAKE_OPTIONS = foreign
 
 bin_PROGRAMS = atomixer
 
-atomixer_SOURCES = main.cc
+atomixer_SOURCES = \
+	Atom.cc		\
+	Atom.hh		\
+	Board.cc	\
+	Board.hh	\
+	main.cc
