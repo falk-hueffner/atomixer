@@ -1,5 +1,5 @@
 /*
-  atomixer -- Atomix puzzle solver
+  atomixer -- Atoimx puzzle solver
   Copyright (C) 2000 Falk Hueffner
 
   This program is free software; you can redistribute it and/or modify it
@@ -19,15 +19,26 @@
   $Id$
 */
 
-#include <iostream>
+#ifndef LEVEL_HH
+#define LEVEL_HH
 
-#include "Level.hh"
+#include <iosfwd>
+
+#include "Board.hh"
 
 using namespace std;
 
-int main() {
-    Level level(cin);
+class Level {
+public:
+    Level(istream& in);
 
-    cout << level << endl;
-    return 0;
-}
+    const Board& startBoard() const { return myStartBoard; }
+    const Board& goal() const { return myGoal; }
+
+private:
+    Board myStartBoard, myGoal;
+};
+
+ostream& operator<<(ostream& out, const Level& level);
+
+#endif

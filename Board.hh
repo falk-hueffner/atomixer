@@ -23,6 +23,8 @@
 #define BOARD_HH
 
 #include <iosfwd>
+#include <map>
+#include <string>
 
 #include "Atom.hh"
 
@@ -31,7 +33,8 @@ using namespace std;
 // a complete representation of a board state, useful for I/O
 class Board {
 public:
-    Board(istream& in);
+    Board() { }			// leave everything blank
+    Board(map<string, string> lines, string key, int len);
 
     static const int XSIZE = 16, YSIZE = 15;
 
@@ -39,6 +42,7 @@ public:
 
 private:
     Atom myFields[XSIZE][YSIZE];
+    Atom myGoal[XSIZE][YSIZE];
 };
 
 ostream& operator<<(ostream& out, const Board& board);

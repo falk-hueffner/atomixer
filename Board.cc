@@ -19,34 +19,22 @@
   $Id$
 */
 
-#include <stdio.h>
-
+#include <iomanip>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 
 #include "Board.hh"
 
 using namespace std;
 
-Board::Board(istream& in) {
-    map<string, string> lines;
-    string line;
-
-    while (getline(in, line)) {
-	string::size_type equalPos = line.find('=');
-	if (equalPos == string::npos)
-	    continue;
-	string key   = line.substr(0, equalPos);
-	string value = line.substr(equalPos + 1);
-
-	lines[key] = value;
-    }
-
+Board::Board(map<string, string> lines, string key, int len) {
     for (int y = 0; y < YSIZE; ++y) {
-	char tmp[] = "feld_XX";
-	sprintf(tmp, "feld_%02d", y);
-	string line = lines[string(tmp)];
+	stringstream keyStream;
+	keyStream << key << '_' << setfill('0') << setw(len) << y;
+	string line = lines[keyStream.str()];
+	    
 	assert (line.length() <= XSIZE);
 	for (int x = 0; x < line.length(); ++x) {
 	    if (line[x] == '.')
