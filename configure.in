@@ -41,6 +41,9 @@ if test x"$ac_cv_prog_gxx" = xyes; then
        cpu=$(awk '/cpu model/ {print tolower($4)}' /proc/cpuinfo)
        CXXFLAGS="$CXXFLAGS -mcpu=$cpu"
        ;;
+     i?86)
+       CXXFLAGS="$CXXFLAGS -march=k6"
+       ;;       
    esac
 elif test x$compaq_cxx = xyes; then
    CXXFLAGS="$CXXFLAGS -O5 -fast -g3 -W -Wall -Wno-sign-compare -msg_display_tag -msg_disable intconlosbit -msg_disable boolexprconst -msg_disable signedonebitfld"
