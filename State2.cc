@@ -57,7 +57,7 @@ vector<Move> State2::moves() const {
 
     for (int i = 0; i < NUM_ATOMS; ++i) {
 	for (int dirNr = 0; dirNr < 4; ++dirNr) {
-	    Dir dir = dirs[dirNr];
+	    Dir dir = DIRS[dirNr];
 	    
 	    Pos pos = atomPositions[i], tmppos = pos;
 	    while (!isBlock[(tmppos += dir).fieldNumber()]) { }

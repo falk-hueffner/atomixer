@@ -126,7 +126,7 @@ void Problem::calcDists(int dists[NUM_FIELDS], Pos goal) {
 	Pos p = q.front();
 	int dist = dists[p.fieldNumber()];
 	for (int dirNo = 0; dirNo < 4; ++dirNo) {
-	    Dir dir = dirs[dirNo];
+	    Dir dir = DIRS[dirNo];
 	    for (Pos tp = p + dir; !myIsBlock[tp.fieldNumber()]; tp += dir) {
 		if (dists[tp.fieldNumber()] > dist + 1) {
 		    dists[tp.fieldNumber()] = dist + 1;
