@@ -47,6 +47,7 @@ HashTable<RevState> Problem::_revStates;
 void Problem::setLevel(const Level& level) {
     typedef multimap<Atom, Pos> AtomMap;
     AtomMap startAtoms;
+    int numFields = 0;
 
     for (Pos pos = 0; pos != Pos::end(); ++pos) {
 	const Atom& atom = level.startBoard().field(pos);
@@ -54,6 +55,8 @@ void Problem::setLevel(const Level& level) {
 	    startAtoms.insert(make_pair(atom, pos));
 
 	myIsBlock[pos.fieldNumber()] = atom.isBlock();
+	if (!atom.isBlock())
+	    ++numFields;
     }
 
     assert(startAtoms.size() == NUM_ATOMS);
@@ -99,6 +102,7 @@ void Problem::setLevel(const Level& level) {
     }
     cout << "unique: " << numUnique << "; paired: " << numPaired
 	 << "; multi: " << numMulti << endl;
+    cout << "Fields: " << numFields << endl;
     assert(numUnique == NUM_UNIQUE);
     assert(numPaired == NUM_PAIRED);
     assert(numMulti == NUM_MULTI);
