@@ -22,7 +22,8 @@
 #ifndef ASTAR2_HH
 #define ASTAR2_HH
 
-#define DO_MREC
+//#define DO_MREC
+#undef DO_MREC
 
 #include <deque>
 

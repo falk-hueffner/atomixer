@@ -45,7 +45,7 @@ using namespace std;
 extern int64_t totalNodesGenerated;
 
 // maximum amount of memory to be used
-static const unsigned int MEMORY = 320 * 1024 * 1024;
+static const unsigned int MEMORY = 900 * 1024 * 1024;
 static const double LOAD_FACTOR = 1.4;
 
 static const unsigned int MAX_STATES = (unsigned int)
@@ -60,7 +60,7 @@ static int64_t nodesGenerated, lastOutput;
 static Timer timer;
 static HashTable<IDAStarPackedState> cachedStates(MAX_STATES, LOAD_FACTOR);
 
-static bool dfs();
+static bool dfs(IDAStarMove lastMove);
 deque<Move> IDAStar(int maxDist) {
     DEBUG0("IDAStar" << maxDist);
     maxMoves = maxDist;
@@ -75,7 +75,7 @@ deque<Move> IDAStar(int maxDist) {
     //DEBUG1(cachedStates.capacity() << " 2 " << MAX_STATES);
 
     timer.reset();
-    dfs();
+    dfs(IDAStarMove());
     totalNodesGenerated += nodesGenerated;
 
     return solution;
@@ -85,7 +85,7 @@ static string spaces(int n) {
     return string(n, ' ');
 }
 
-static bool dfs() {
+static bool dfs(IDAStarMove lastMove) {
     DEBUG0(spaces(moves) << "dfs: moves =  " << moves << " state = " << state);
     if (state.minMovesLeft() == 0)
 	return true;		// not true for all heuristics, but for this one
@@ -128,11 +128,36 @@ static bool dfs() {
 	    Pos newPos = pos - dir;
 	    if (newPos != startPos) {
 		DEBUG0(spaces(moves) << "moves to " << newPos);
-		IDAStarMove move(startPos, newPos);
+		IDAStarMove move(atomNo, dir, startPos, newPos);
+		if (moves > 0) {
+		    if (atomNo < lastMove.atomNo) {
+			// this is only allowed if the two moves are not independent.
+			// case 1
+			for (Pos p = lastMove.p1; p != lastMove.p2; p += lastMove.dir)
+			    if (p == newPos)
+				goto dependent;
+			// case 2
+			if (newPos + dir == lastMove.p2)
+			    goto dependent;
+			// case 3
+			for (Pos p = startPos; p != newPos; p += dir)
+			    if (p == lastMove.p1)
+				goto dependent;
+			// case 4
+			if (newPos == lastMove.p2 + lastMove.dir)
+			    goto dependent;
+				
+			// all test failed: moves are independent. Prune this
+			// ordering.
+			continue;
+		    dependent:
+			;		// moves are dependent; no ordering possible
+		    }
+		}
 		state.apply(move);
 		++moves;
 		++nodesGenerated;
-		if (dfs()) {
+		if (dfs(move)) {
 		    solution.push_front(Move(atomNo, startPos, newPos, dir));
 		    return true;
 		}

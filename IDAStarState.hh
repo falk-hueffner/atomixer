@@ -29,9 +29,13 @@
 class IDAStarMove {
     friend class IDAStarState;
 public:
-    IDAStarMove(Pos np1, Pos np2) : p1(np1), p2(np2) { }
+    IDAStarMove() { }
+    IDAStarMove(int natomNo, Dir ndir, Pos np1, Pos np2)
+	: atomNo(natomNo), dir(ndir), p1(np1), p2(np2) { }
 
-private:
+//private:
+    int atomNo;
+    Dir dir;
     Pos p1, p2;
 };
 
