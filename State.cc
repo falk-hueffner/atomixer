@@ -20,6 +20,7 @@
 */
 
 #include <iostream>
+#include <algorithm>
 
 #include "Dir.hh"
 #include "Problem.hh"
@@ -65,8 +66,15 @@ vector<Move> State::moves() const {
 
 int State::minMovesLeft() const {
     int minMovesLeft = 0;
-    for (int i = 0; i < NUM_ATOMS; ++i)
+    for (int i = 0; i < NUM_UNIQUE; ++i)
 	minMovesLeft += Problem::goalDist(i, myAtomPositions[i]);
+    for (int i = PAIRED_START; i < NUM_ATOMS; i += 2) {
+	int moves1 = Problem::goalDist(i, myAtomPositions[i])
+	    + Problem::goalDist(i + 1, myAtomPositions[i + 1]);
+	int moves2 = Problem::goalDist(i, myAtomPositions[i + 1])
+	    + Problem::goalDist(i + 1, myAtomPositions[i]);
+	minMovesLeft += min(moves1, moves2);
+    }
 
     return minMovesLeft;
 }

@@ -40,12 +40,14 @@ public:
     int fieldNumber() const { return p; }
 
     static Pos null() { return Pos(-1); }
+    static Pos end() { return Pos(NUM_FIELDS); }
     bool ok() const { return p != -1; }
 
     bool operator==(Pos other) const { return p == other.p; }
     bool operator!=(Pos other) const { return p != other.p; }
     bool operator<(Pos other) const { return p < other.p; }
     Pos& operator+=(Dir dir) { p += dir; return *this; }
+    Pos& operator++() { ++p; return *this; }
     Pos operator+(Dir dir) const { return Pos(p + dir); }
     Pos operator-(Dir dir) const { return Pos(p - dir); }
 

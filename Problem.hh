@@ -22,8 +22,6 @@
 #ifndef PROBLEM_HH
 #define PROBLEM_HH
 
-#include <vector>
-
 class Level;
 class Board;
 
