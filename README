@@ -1,4 +1,4 @@
-Adapt memory in Size.hh.in.
+Adapt memory in AStar2.hh.
 
 Configure with
 
@@ -8,5 +8,8 @@ Run with e. g.:
 
 ./run.sh levels/katomic_01
 
-Most of the source will be recompiled for each level.
+Most of the source will be recompiled for each level. Lower bound will
+be extracted from "stats".
+
+
 
