@@ -23,7 +23,6 @@
 #define STATE_HH
 
 #include <iosfwd>
-#include <vector>
 
 class Problem;
 
@@ -32,9 +31,11 @@ class Problem;
 using namespace std;
 
 class State {
+    friend ostream& operator<<(ostream& out, const State& state);
+
 public:
     State() { }			// leave uninitialized
-    explicit State(vector<Pos> atomPositions);
+    explicit State(const Pos atomPositions[NUM_ATOMS]);
     State(const State& state, const Move& move);
 
     bool operator<(const State& other) const; // to put into STL set
@@ -43,12 +44,8 @@ public:
     vector<Move> moves() const;
     int minMovesLeft() const;
 
-    const vector<Pos>& atomPositions() const { return myAtomPositions; }
-
 private:
-    vector<Pos> myAtomPositions;
+    unsigned char myAtomPositions[NUM_ATOMS];
 };
-
-ostream& operator <<(ostream& out, const State& state);
 
 #endif

@@ -15,6 +15,7 @@ katomic_01	=15
 	2@(I8)u->(I4)
 	2@(I4)r->(J4)
 
+katomic_02	>=18	<=32
 katomic_03	>=14	<=20
 
 katomic_20	=18

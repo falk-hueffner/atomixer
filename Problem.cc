@@ -21,36 +21,37 @@
 
 #include <assert.h>
 
-//# include <iostream.h>
-
 #include "Level.hh"
 #include "Problem.hh"
 
 bool Problem::myIsBlock[NUM_FIELDS];
-vector<Pos> Problem::myStartPositions;
-vector<Pos> Problem::myGoalPositions;
+Pos Problem::myStartPositions[NUM_ATOMS];
+Pos Problem::myGoalPositions[NUM_ATOMS];
+
 
 void Problem::setLevel(const Level& level) {
+    int numAtoms = 0;
     for (int y = 0; y < YSIZE; ++y) {
 	for (int x = 0; x < XSIZE; ++x) {
 	    const Atom& atom = level.startBoard().field(x, y);
 	    if (atom.isAtom())
-		myStartPositions.push_back(Pos(x, y));
+		myStartPositions[numAtoms++] = Pos(x, y);
+	    assert(numAtoms <= NUM_ATOMS);
 	    myIsBlock[Pos(x, y).fieldNumber()] = atom.isBlock();
 	}
     }
+    assert(numAtoms == NUM_ATOMS);
 }
 
 void Problem::setGoal(const Level& level, int goalPosNr) {
-    myGoalPositions.clear();
+    int atomNo = 0;
     Pos d = level.goalPos(goalPosNr);
     int dx = d.x(), dy = d.y();
-    for (int i = 0; i < myStartPositions.size(); ++i) {
+    for (int i = 0; i < NUM_ATOMS; ++i) {
 	const Atom& atom = level.startBoard().field(myStartPositions[i].fieldNumber());
 	Pos goalPos = level.goal().find(atom);
 	Pos realGoalPos = Pos(goalPos.x() + dx, goalPos.y() + dy);
 	assert(realGoalPos.ok());
-	myGoalPositions.push_back(realGoalPos);
-	//cout << "goal for " << myStartPositions[i] << " is " << realGoalPos << endl;
+	myGoalPositions[atomNo++] = realGoalPos;
     }
 }
