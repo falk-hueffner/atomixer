@@ -19,33 +19,10 @@
   $Id$
 */
 
-#ifndef BOARD_HH
-#define BOARD_HH
+#include <iostream>
 
-#include <iosfwd>
-#include <map>
-#include <string>
-
-#include "Atom.hh"
 #include "Pos.hh"
 
-using namespace std;
-
-// a complete representation of a board state, useful for I/O
-class Board {
-public:
-    Board() { }			// leave everything blank
-    Board(map<string, string> lines, string key, int len);
-
-    const Atom& field(int x, int y) const { return myFields[x][y]; }
-
-private:
-    void floodFill(int x, int y);
-    
-    Atom myFields[XSIZE][YSIZE];
-    Atom myGoal[XSIZE][YSIZE];
-};
-
-ostream& operator<<(ostream& out, const Board& board);
-
-#endif
+ostream& operator<<(ostream& out, const Pos& pos) {
+    return out << '(' << pos.x() << ", " << pos.y() << ')';
+}
