@@ -57,10 +57,6 @@ public:				// for simplicity
     unsigned int numMoves	: 7;
 #endif
     bool isOpen			: 1;
-}
-#ifdef HAVE_ATTRIBUTE_PACKED
-    __attribute__ ((packed))
-#endif
-    ;
+} __attribute__ ((packed));
 
 #endif

@@ -81,11 +81,6 @@ public:
 
 private:
     void undo(const Move& move); // not easily implementable
-}
-#ifdef HAVE_ATTRIBUTE_PACKED
-    __attribute__ ((packed))
-#endif
-    ;
-
+} __attribute__ ((packed));
 
 #endif

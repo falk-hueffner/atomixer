@@ -71,11 +71,7 @@ public:
 
 protected:
     ShortPos atomPositions_[NUM_ATOMS];
-}
-#ifdef HAVE_ATTRIBUTE_PACKED
-    __attribute__ ((packed))
-#endif
-    ;
+} __attribute__ ((packed));
 
 #include "State.cc"
 

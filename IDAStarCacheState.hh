@@ -49,10 +49,6 @@ public:
 
     unsigned char minMovesFromStart;
     unsigned char minMovesLeft;
-}
-#ifdef HAVE_ATTRIBUTE_PACKED
-    __attribute__ ((packed))
-#endif
-    ;
+} __attribute__ ((packed));
 
 #endif

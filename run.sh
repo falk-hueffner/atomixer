@@ -1,9 +1,5 @@
 #! /bin/sh -f
 
-if [ ! -f Makefile ]; then
-    ./configure
-fi
-
 level=$1
 
 if [ ! -r "$level" ]; then

@@ -25,11 +25,7 @@
 #include <iostream>
 #include <map>
 
-#ifdef HAVE_SSTREAM
-# include <sstream>
-#else
-# include <strstream>
-#endif
+#include <sstream>
 #include <string>
 
 #include "Board.hh"
@@ -40,11 +36,7 @@ using namespace std;
 
 Board::Board(map<string, string> lines, string key, int len) {
     for (int y = 0; y < YSIZE; ++y) {
-#ifdef HAVE_SSTREAM
 	ostringstream keyStream;
-#else
-	ostrstream keyStream;
-#endif
 	keyStream << key << '_' << setfill('0') << setw(len) << y;
 	string line = lines[keyStream.str()];
 	    
