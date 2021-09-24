@@ -200,7 +200,7 @@ static bool dfs(const Move& lastMove) {
 	cachedStates.insert(cacheState);
 #endif
     
-    if ((Statistics::statesExpanded & 0xfffff) == 0) {
+    if ((Statistics::statesExpanded & 0xffffff) == 0) {
 	cout << ALGORITHM_NAME << endl << state << " / " << maxMoves << endl
 #ifdef DO_CACHING
 	     << " cached: " << cachedStates.size() << " ("
