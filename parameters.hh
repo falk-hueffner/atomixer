@@ -23,7 +23,7 @@
 #define PARAMETERS_HH
 
 // maximum amount of memory to be used
-static const unsigned int MEMORY = 40 * 1024 * 1024;
+static const unsigned long MEMORY = 7UL * 1024UL * 1024UL * 1024UL;
 
 // define if you're sure your OS returns fresh pages zeroed (like Linux, but
 // unlike Solaris)
