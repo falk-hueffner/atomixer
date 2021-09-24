@@ -1,0 +1,380 @@
+#! /usr/bin/python
+
+from sys import stdin
+from string import strip, find, split, zfill
+
+def printXfigHeader():
+    print "#FIG 3.2"
+    print "Landscape"
+    print "Center"
+    print "Metric"
+    print "A4"
+    print "100.00"
+    print "Single"
+    print "-2"
+    print "1200 2"
+
+class Pos:
+    def __init__(self, x, y):
+	self.x = x
+	self.y = y
+
+    def __repr__(self):
+	#reprint "\t", self.x, self.y,
+	return "%d %d" % (round(self.x), round(self.y))
+
+
+class LineStyle:
+    DEFAULT = -1
+    SOLID = 0
+    DASHED = 1
+    DOTTED = 2
+    DASH_DOTTED = 3
+    DASH_DOUBLE_DOTTED = 4
+    DASH_TRIPLE_DOTTED = 5
+
+class Color:
+    DEFAULT = -1
+    BLACK = 0
+    WHITE = 7
+    
+
+class Line:
+    def __init__(self, start, end, lineStyle = LineStyle.DEFAULT,
+		 thickness = 1, penColor = Color.DEFAULT,
+		 fillColor = Color.DEFAULT, depth = 50, areaFill = -1):
+	self.start = start
+	self.end = end
+	self.lineStyle = lineStyle
+	self.thickness = thickness
+	self.penColor = penColor
+	self.fillColor = fillColor
+	self.depth = depth
+	self.areaFill = areaFill
+
+    def dump(self):
+	print 2,			# object code
+	print 1,			# subtype
+	print self.lineStyle,		# line style
+	print self.thickness,		# thickness in 1/80 inch
+	print self.penColor,
+	print self.fillColor,
+	print self.depth,
+	print 0,			# pen style, not used
+	print self.areaFill,		# area_fill, -1 = no fill
+	print 3.0,			# float style_val (1/80 inch)
+	print 0,			# join_style
+	print 0,			# cap_style
+	print -1,			# radius of arc-boxes
+	print 0,			# forward_arrow (0: off, 1: on)
+	print 0,			# backward_arrow (0: off, 1: on)
+	print 2				# number of points in line
+
+	#self.start.dump()
+	print "\t" + `self.start`
+	print "\t" + `self.end`
+
+class Square:
+    def __init__(self, pos, size, lineStyle = LineStyle.DEFAULT,
+		 penColor = Color.DEFAULT, fillColor = Color.DEFAULT,
+		 depth = 50, areaFill = -1):
+	self.pos = pos
+	self.size = size
+	self.lineStyle = lineStyle
+	self.penColor = penColor
+	self.fillColor = fillColor
+	self.depth = depth
+	self.areaFill = areaFill
+
+    def dump(self):
+	print 2,			# object code
+	print 2,			# subtype (2: box)
+	print self.lineStyle,		# line style
+	print 1,			# thickness in 1/80 inch
+	print self.penColor,
+	print self.fillColor,
+	print self.depth,
+	print 0,			# pen style, not used
+	print self.areaFill,		# area_fill, -1 = no fill
+	print 3.0,			# float style_val (1/80 inch)
+	print 0,			# join_style
+	print 0,			# cap_style
+	print -1,			# radius of arc-boxes
+	print 0,			# forward_arrow (0: off, 1: on)
+	print 0,			# backward_arrow (0: off, 1: on)
+	print 5				# number of points in line
+
+	#self.start.dump()
+	print "\t" + `self.pos`,
+	print `Pos(self.pos.x + self.size, self.pos.y)`,
+	print `Pos(self.pos.x + self.size, self.pos.y + self.size)`,
+	print `Pos(self.pos.x, self.pos.y + self.size)`,
+	print `self.pos`
+
+class Circle:
+    def __init__(self, center, radius, areaFill = -1):
+	self.center = center
+	self.radius = int(radius)
+	self.areaFill = areaFill
+
+    def dump(self):
+	print 1,			# object_code
+	print 3,			# sub_type: circle defined by radius
+	print LineStyle.DEFAULT,
+	print 1,			# thickness (1/80 inch)
+	print Color.DEFAULT,		# pen_color
+	print Color.DEFAULT,		# fill_color
+	print 50,			# depth
+	print 0,			# pen style, not used
+	print self.areaFill,		# area_fill, -1 = no fill
+	print 0,			# style_val (1/80 inch)
+	print 1,			# direction (always 1)
+	print 0,			# the angle of the x-axis (radians)
+	print self.center,
+	print self.radius, self.radius,
+	print self.center,		# the 1st point entered
+	print int(self.center.x),
+	print int(self.center.y - self.radius) # the last point entered
+
+class Text:
+    def __init__(self, pos, size, text):
+	self.pos = pos
+	self.size = size
+	self.text = text
+
+    def dump(self):
+	print 4,			# object_code
+	print 1,			# Center justified
+	print -1,			# color
+	print 49,			# depth
+	print -1,			# pen_style, not used
+	print -1,			# font
+	print int(self.size / 10.0),	# font size in points (???)
+	print 0,			# angle of the text (radians)
+	print 2,			# font flags (2: PostScript font)
+	print int(self.size),		# height (unused?)
+	print -1,			# length
+	print int(self.pos.x), int(self.pos.y + 0.5 * self.size), # x, y
+	#print int(self.pos.x), int(self.pos.y), # x, y
+	print self.text + "\\001"
+
+def findFirstNot(s, c):
+    for i in xrange(len(s)):
+	if s[i] != c:
+	    return i
+    return -1
+
+def findLastNot(s, c):
+    for i in xrange(len(s) - 1, -1, -1):
+	if s[i] != c:
+	    return i
+    return -1
+
+class Level:
+    def __init__(self, atoms, lines, id, width):
+	self.atoms = atoms
+	self.fields = []
+	lineNo = 0
+	while 1:
+	    key = id + '_' + zfill(lineNo, width)
+	    if not lines.has_key(key):
+		break
+
+	    self.fields.append(lines[key])
+	    lineNo = lineNo + 1
+
+	# crop top and bottom
+	while self.fields and findFirstNot(self.fields[0], '.') == -1:
+	    del self.fields[0]
+
+	while self.fields and findFirstNot(self.fields[-1], '.') == -1:
+	    del self.fields[-1]
+
+	# crop left
+	cropLeft = 999
+	for line in self.fields:
+	    nonEmpty = findFirstNot(line, '.')
+	    if nonEmpty != -1 and nonEmpty < cropLeft:
+		cropLeft = nonEmpty
+
+	for i in xrange(len(self.fields)):
+	    self.fields[i] = self.fields[i][cropLeft:]
+
+	# crop right
+	cropRight = 0
+	for line in self.fields:
+	    nonEmpty = findLastNot(line, '.')
+	    if nonEmpty != -1 and nonEmpty > cropRight:
+		cropRight = nonEmpty
+
+	for i in xrange(len(self.fields)):
+	    self.fields[i] = self.fields[i][0:cropRight + 1]
+	#for line in self.fields:
+	    #print line
+
+    def xsize(self):
+	if not self.fields:
+	    return 0
+	else:
+	    return len(self.fields[0])
+    def ysize(self):
+	return len(self.fields)
+
+    def dump(self, pos, size, drawLines = 1):
+	xsize = self.xsize()
+	ysize = self.ysize()
+	if drawLines:
+	    for y in xrange(ysize + 1):
+		l = Line(Pos(pos.x, pos.y + y * size),
+			 Pos(pos.x + xsize * size, pos.y + y * size),
+			 lineStyle = LineStyle.DOTTED)
+		l.dump()
+
+	    for x in xrange(xsize + 1):
+		l = Line(Pos(pos.x + x * size, pos.y),
+			 Pos(pos.x + x * size, pos.y + ysize * size),
+			 lineStyle = LineStyle.DOTTED)
+		l.dump()
+
+	for y in xrange(ysize):
+	    for x in xrange(xsize):
+		if self.fields[y][x] == '#':
+		    Square(Pos(pos.x + x * size, pos.y + y * size),
+			   size, areaFill = 5).dump()
+		    #Text(Pos(pos.x + x * size + 0.5*size, pos.y + y * size+0.5*size),
+			# 0.4 * size, "+1").dump()
+		elif self.atoms.has_key(self.fields[y][x]):
+		    self.atoms[self.fields[y][x]].dump(
+			Pos(pos.x + x * size, pos.y + y * size), size)
+
+class Atom:
+    def __init__(self, line):
+	typeMap = {'1': 'H',
+		   '2': 'C',
+		   '3': 'O',
+		   '4': 'N',
+		   '5': 'S',
+		   '6': 'F',
+		   '7': 'Cl',
+		   '8': 'He',
+		   '9': 'Ne'
+		   }
+	self.type = typeMap[line[0]]
+	line = line[1:]
+	self.bindings = [0] * 8;
+
+	while line:
+	    letter = line[0]
+	    if letter >= 'a' and letter <= 'h':
+		self.bindings[ord(letter) - ord('a')] = 1
+	    elif letter >= 'A' and letter <= 'D':
+		self.bindings[(ord(letter) - ord('A')) * 2] = 2
+	    elif letter >= 'E' and letter <= 'H':
+		self.bindings[(ord(letter) - ord('E')) * 2] = 3
+		
+	    line = line[1:]
+	#print self.bindings
+
+    def dump(self, pos, size):
+	hs = 0.5 * size
+	mx = pos.x + hs
+	my = pos.y + hs
+	d  = 0.1 * size 
+	blackness = 5			# 0--20
+	th = size / 100
+	if (self.type == 'H'):
+	    blackness = 3
+	elif (self.type == 'C'):
+	    blackness = 7
+	Circle(Pos(mx, my), 0.4 * size, areaFill = blackness).dump()
+	Text(Pos(mx, my), 0.4 * size, self.type).dump()
+
+	if self.bindings[0] == 1:
+	    Line(Pos(mx, my), Pos(mx, my - hs), thickness = th, depth = 51).dump()
+	if self.bindings[1] == 1:
+	    Line(Pos(mx, my), Pos(mx + hs, my - hs), thickness = th, depth = 51).dump()
+	if self.bindings[2] == 1:
+	    Line(Pos(mx, my), Pos(mx + hs, my), thickness = th, depth = 51).dump()
+	if self.bindings[3] == 1:
+	    Line(Pos(mx, my), Pos(mx + hs, my + hs), thickness = th, depth = 51).dump()
+	if self.bindings[4] == 1:
+	    Line(Pos(mx, my), Pos(mx, my + hs), thickness = th, depth = 51).dump()
+	if self.bindings[5] == 1:
+	    Line(Pos(mx, my), Pos(mx - hs, my + hs), thickness = th, depth = 51).dump()
+	if self.bindings[6] == 1:
+	    Line(Pos(mx, my), Pos(mx - hs, my), thickness = th, depth = 51).dump()
+	if self.bindings[7] == 1:
+	    Line(Pos(mx, my), Pos(mx - hs, my - hs), thickness = th, depth = 51).dump()
+
+	if self.bindings[0] == 2:
+	    Line(Pos(mx - d, my), Pos(mx - d, my - hs), thickness = th, depth = 51).dump()
+	    Line(Pos(mx + d, my), Pos(mx + d, my - hs), thickness = th, depth = 51).dump()
+	if self.bindings[2] == 2:
+	    Line(Pos(mx, my - d), Pos(mx + hs, my - d), thickness = th, depth = 51).dump()
+	    Line(Pos(mx, my + d), Pos(mx + hs, my + d), thickness = th, depth = 51).dump()
+	if self.bindings[4] == 2:
+	    Line(Pos(mx - d, my), Pos(mx - d, my + hs), thickness = th, depth = 51).dump()
+	    Line(Pos(mx + d, my), Pos(mx + d, my + hs), thickness = th, depth = 51).dump()
+	if self.bindings[6] == 2:
+	    Line(Pos(mx, my - d), Pos(mx - hs, my - d), thickness = th, depth = 51).dump()
+	    Line(Pos(mx, my + d), Pos(mx - hs, my + d), thickness = th, depth = 51).dump()
+
+    def __str__(self):
+	return "Atom " + self.type + `self.bindings`
+
+# xsize = 18
+# ysize = 12
+
+# squaresize = 500
+# atomsize = squaresize * 0.8
+
+# for y in range(0, ysize + 1):
+#     l = Line(Pos(0, y * squaresize),
+# 	     Pos(xsize * squaresize, y * squaresize),
+# 	     lineStyle = LineStyle.DOTTED)
+#     l.dump()
+
+# for x in range(0, xsize + 1):
+#     l = Line(Pos(x * squaresize, 0),
+# 	     Pos(x * squaresize, ysize * squaresize),
+# 	     lineStyle = LineStyle.DOTTED)
+#     l.dump()
+
+# c = Circle(Pos(5 * squaresize + 0.5 * squaresize,
+# 	       3 * squaresize + 0.5 * squaresize),
+# 	   0.5 * atomsize, areaFill = 5)
+# c.dump()
+
+lines = stdin.readlines()
+
+lineDict = {}
+
+for line in lines:
+    if find(line, "=") != -1:
+	(key, value) = split(strip(line), "=", 1)
+	lineDict[key] = value
+
+#print lineDict
+
+atomMap = {}
+
+for key in lineDict.keys():
+    if find(key, "atom_") == 0:
+	atomMap[key[5:]] = Atom(lineDict[key])
+
+#for atom in atomMap.values():
+#    print atom
+
+printXfigHeader()
+
+tileSize = 500
+
+level = Level(atomMap, lineDict, "feld", 2)
+level.dump(Pos(0, 0), tileSize)
+
+goal = Level(atomMap, lineDict, "mole", 1)
+#goal.dump(Pos(tileSize / 2, tileSize * level.ysize() + tileSize / 2),
+#	  tileSize / 2, 0)
+goal.dump(Pos(tileSize * level.xsize() + tileSize / 2, tileSize / 2),
+	  tileSize / 2, 0)
+
