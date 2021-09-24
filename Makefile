@@ -47,6 +47,6 @@ atomixer:		\
 		rm -f $*.d
 
 clean:
-	rm -f *.o $(EXECS) core gmon.out
+	rm -rf *.o .deps $(EXECS) Size.hh core gmon.out
 
 -include $(wildcard .deps/*.P)
