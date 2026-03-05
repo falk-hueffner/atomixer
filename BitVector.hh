@@ -24,7 +24,10 @@
 
 #include "stdint.h"
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <new>
 
 // unfortunately, vector<bool> has no operator[](uint64_t), so it is limited
 // to half a gig of memory. So we have to do it ourselves for 32-bit
@@ -38,17 +41,15 @@ public:
     }
 
     void init(uint64_t numBits) {
-	delete[] bits;
+	free(bits);
 	numBits_ = numBits;
 	numLimbs = (numBits_ + BITS_PER_ULONG - 1) / BITS_PER_ULONG;
-	bits = new unsigned long[numLimbs];
-#ifdef MY_OS_ZEROES_LARGE_MEMORY_ALLOCATIONS
-	if (numBits / 8 < 65536)
-#endif
-	    memset(bits, 0, numBits / 8);
+	bits = (unsigned long*) calloc(numLimbs, sizeof(unsigned long));
+	if (!bits && numLimbs)
+	    throw std::bad_alloc();
     }
 
-    ~BitVector() { delete[] bits; }
+    ~BitVector() { free(bits); }
 
     uint64_t numBits() const { return numBits_; }
 

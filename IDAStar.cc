@@ -25,6 +25,7 @@
 
 #include <deque>
 #include <iostream>
+#include <new>
 #include <vector>
 
 #include "Dir.hh"
@@ -126,14 +127,12 @@ deque<Move> IDAStar(int maxDist) {
 #endif
 
 #ifdef DO_COMPACTION
-    delete[] compactionTable;
+    free(compactionTable);
     compactionTableCapacity = MEMORY;
     compactionTableEntries = 0;
-    compactionTable = new uint8_t[compactionTableCapacity];
-#ifdef MY_OS_ZEROES_LARGE_MEMORY_ALLOCATIONS
-    if (compactionTableCapacity < 65536)
-#endif
-	memset(compactionTable, 0, compactionTableCapacity);
+    compactionTable = (uint8_t*) calloc(compactionTableCapacity, 1);
+    if (!compactionTable)
+	throw std::bad_alloc();
 
 #endif
 
